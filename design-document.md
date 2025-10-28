@@ -513,15 +513,8 @@ Sometimes the best distributed algorithm is no coordination at all.
 
 ---
 
-## Get Started with Harper
+## References
 
-Want to implement this pattern or explore Harper's distributed application platform?
-
-**Try Harper Fabric:** Sign up at [fabric.harper.fast](https://fabric.harper.fast) to deploy globally distributed applications with built-in data sync. No credit card required - free tier available.
-
-**Need help?** Reach out to our team at Harper - we'd love to hear about your data ingestion challenges and help you architect a solution.
-
-**Resources:**
-- [Full Design Document](#)
-- [Code Repository on GitHub](#)
 - [HarperDB Documentation](https://docs.harperdb.io)
+- [Harper Clustering Documentation](https://docs.harperdb.io/docs/developers/replication)
+- [Harper Fabric](https://fabric.harper.fast)
