@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { getSynthesizerConfig } from '../src/config-loader.js';
+import { getSynthesizerConfig, getPluginConfig } from '../src/config-loader.js';
 
 describe('Config Loader', () => {
   describe('getSynthesizerConfig', () => {
@@ -92,6 +92,138 @@ describe('Config Loader', () => {
       assert.strictEqual(config.generationIntervalMs, 30000);
       assert.strictEqual(config.retentionDays, 60);
       assert.strictEqual(config.cleanupIntervalHours, 12);
+    });
+  });
+
+  describe('getPluginConfig', () => {
+    it('should extract basic BigQuery config', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US'
+        }
+      };
+
+      const config = getPluginConfig(mockConfig);
+
+      assert.strictEqual(config.projectId, 'test-project');
+      assert.strictEqual(config.dataset, 'test_dataset');
+      assert.strictEqual(config.table, 'test_table');
+      assert.strictEqual(config.timestampColumn, 'timestamp');
+      assert.strictEqual(config.credentials, 'test-key.json');
+      assert.strictEqual(config.location, 'US');
+    });
+
+    it('should default to wildcard columns when not specified', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US'
+        }
+      };
+
+      const config = getPluginConfig(mockConfig);
+
+      assert.deepStrictEqual(config.columns, ['*']);
+    });
+
+    it('should normalize columns array', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US',
+          columns: ['timestamp', 'mmsi', 'latitude', 'longitude']
+        }
+      };
+
+      const config = getPluginConfig(mockConfig);
+
+      assert.deepStrictEqual(config.columns, ['timestamp', 'mmsi', 'latitude', 'longitude']);
+    });
+
+    it('should normalize wildcard string to array', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US',
+          columns: '*'
+        }
+      };
+
+      const config = getPluginConfig(mockConfig);
+
+      assert.deepStrictEqual(config.columns, ['*']);
+    });
+
+    it('should throw error when timestamp column not in column list', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US',
+          columns: ['mmsi', 'latitude', 'longitude'] // missing timestamp
+        }
+      };
+
+      assert.throws(
+        () => getPluginConfig(mockConfig),
+        { message: /Timestamp column 'timestamp' must be included in columns list/ }
+      );
+    });
+
+    it('should throw error for empty columns array', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json',
+          location: 'US',
+          columns: []
+        }
+      };
+
+      assert.throws(
+        () => getPluginConfig(mockConfig),
+        { message: /Column array cannot be empty/ }
+      );
+    });
+
+    it('should default location to US when not specified', () => {
+      const mockConfig = {
+        bigquery: {
+          projectId: 'test-project',
+          dataset: 'test_dataset',
+          table: 'test_table',
+          timestampColumn: 'timestamp',
+          credentials: 'test-key.json'
+          // location not specified
+        }
+      };
+
+      const config = getPluginConfig(mockConfig);
+
+      assert.strictEqual(config.location, 'US');
     });
   });
 });

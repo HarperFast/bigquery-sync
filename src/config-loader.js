@@ -7,12 +7,16 @@ import { readFileSync } from 'fs';
 import { parse } from 'yaml';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { validateFullConfig, validateAndNormalizeColumns } from './validators.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
  * Load configuration from config.yaml
+ * @param {string|null} configPath - Optional path to config file
+ * @returns {Object} Parsed configuration object
+ * @throws {Error} If config file cannot be read or parsed
  */
 export function loadConfig(configPath = null) {
   try {
@@ -34,6 +38,9 @@ export function loadConfig(configPath = null) {
 /**
  * Get BigQuery configuration for the synthesizer
  * Uses bigquery section as primary config, with optional synthesizer overrides
+ * @param {Object|null} config - Optional pre-loaded configuration
+ * @returns {Object} BigQuery configuration for the synthesizer
+ * @throws {Error} If bigquery section is missing
  */
 export function getSynthesizerConfig(config = null) {
   const fullConfig = config || loadConfig();
@@ -65,7 +72,11 @@ export function getSynthesizerConfig(config = null) {
 }
 
 /**
- * Get BigQuery configuration for the plugin (for reference)
+ * Get BigQuery configuration for the plugin
+ * Validates configuration and normalizes column selection
+ * @param {Object|null} config - Optional pre-loaded configuration
+ * @returns {Object} Validated BigQuery configuration with normalized columns
+ * @throws {Error} If configuration is invalid
  */
 export function getPluginConfig(config = null) {
   const fullConfig = config || loadConfig();
@@ -74,13 +85,20 @@ export function getPluginConfig(config = null) {
     throw new Error('bigquery section missing in config.yaml');
   }
 
+  // Validate and normalize columns (defaults to ['*'] if not specified)
+  const normalizedColumns = validateAndNormalizeColumns(
+    fullConfig.bigquery.columns,
+    fullConfig.bigquery.timestampColumn
+  );
+
   return {
     projectId: fullConfig.bigquery.projectId,
     dataset: fullConfig.bigquery.dataset,
     table: fullConfig.bigquery.table,
     timestampColumn: fullConfig.bigquery.timestampColumn,
     credentials: fullConfig.bigquery.credentials,
-    location: fullConfig.bigquery.location || 'US'
+    location: fullConfig.bigquery.location || 'US',
+    columns: normalizedColumns
   };
 }
 
