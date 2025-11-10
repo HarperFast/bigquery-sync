@@ -6,6 +6,7 @@
 
 import { BigQueryClient } from './bigquery-client.js';
 import { globals } from './globals.js';
+import { convertBigQueryTypes } from './type-converter.js';
 
 export class SyncEngine {
   constructor(config) {
@@ -241,60 +242,6 @@ export class SyncEngine {
     return batchSize;
   }
   
-  convertBigQueryTypes(record) {
-    // Convert BigQuery types to JavaScript primitives
-    // All timestamp/datetime types are converted to Date objects for Harper's timestamp type
-    const converted = {};
-    for (const [key, value] of Object.entries(record)) {
-      if (value === null || value === undefined) {
-        converted[key] = value;
-      } else if (typeof value === 'bigint') {
-        // Convert BigInt to number or string depending on size
-        converted[key] = value <= Number.MAX_SAFE_INTEGER ? Number(value) : value.toString();
-      } else if (value && typeof value === 'object') {
-        // Handle various BigQuery object types
-        const constructorName = value.constructor?.name;
-
-        // BigQuery Timestamp/DateTime objects
-        if (constructorName === 'BigQueryTimestamp' || constructorName === 'BigQueryDatetime' || constructorName === 'BigQueryDate') {
-          // Convert to Date object - Harper's timestamp type expects Date objects
-          if (value.value) {
-            // value.value contains the ISO string
-            const dateObj = new Date(value.value);
-            logger.trace(`[SyncEngine.convertBigQueryTypes] Converted ${constructorName} '${key}': ${value.value} -> Date(${dateObj.toISOString()})`);
-            converted[key] = dateObj;
-          } else if (typeof value.toJSON === 'function') {
-            const jsonValue = value.toJSON();
-            const dateObj = new Date(jsonValue);
-            logger.trace(`[SyncEngine.convertBigQueryTypes] Converted ${constructorName} '${key}' via toJSON: ${jsonValue} -> Date(${dateObj.toISOString()})`);
-            converted[key] = dateObj;
-          } else {
-            logger.warn(`[SyncEngine.convertBigQueryTypes] Unable to convert ${constructorName} for key ${key}`);
-            converted[key] = value;
-          }
-        } else if (typeof value.toISOString === 'function') {
-          // Already a Date object - keep as-is
-          converted[key] = value;
-        } else if (typeof value.toJSON === 'function') {
-          // Object with toJSON method - convert
-          const jsonValue = value.toJSON();
-          // If it looks like an ISO date string, convert to Date
-          if (typeof jsonValue === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(jsonValue)) {
-            const dateObj = new Date(jsonValue);
-            logger.trace(`[SyncEngine.convertBigQueryTypes] Converted generic timestamp '${key}': ${jsonValue} -> Date(${dateObj.toISOString()})`);
-            converted[key] = dateObj;
-          } else {
-            converted[key] = jsonValue;
-          }
-        } else {
-          converted[key] = value;
-        }
-      } else {
-        converted[key] = value;
-      }
-    }
-    return converted;
-  }
 
   async ingestRecords(records) {
 
@@ -305,8 +252,8 @@ export class SyncEngine {
 
     for (const record of records) {
       try {
-        // Convert BigQuery types to JavaScript primitives
-        const convertedRecord = this.convertBigQueryTypes(record);
+        // Convert BigQuery types to JavaScript primitives using type-converter utility
+        const convertedRecord = convertBigQueryTypes(record);
         logger.trace(`[SyncEngine.ingestRecords] Converted record: ${JSON.stringify(convertedRecord)}`);
 
         // Validate timestamp exists

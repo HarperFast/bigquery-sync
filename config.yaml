@@ -19,6 +19,12 @@ bigquery:
   credentials: service-account-key.json
   location: US  # BigQuery dataset location (US, EU, or specific region like us-central1)
 
+  # Column selection (optional) - specify which columns to fetch from BigQuery
+  # Omit this field or use "*" to fetch all columns (default behavior: SELECT *)
+  # When specified, timestampColumn MUST be included in the list
+  # columns: [timestamp, mmsi, vessel_name, latitude, longitude, speed_knots]
+  # columns: "*"  # Equivalent to omitting the field
+
 # Maritime vessel data synthesizer configuration (OPTIONAL)
 # Optional: Override target dataset/table (defaults to bigquery.dataset and bigquery.table)
 # By default, synthesizer uses the bigquery: section above (same dataset/table as plugin)
