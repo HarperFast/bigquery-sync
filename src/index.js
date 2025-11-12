@@ -16,6 +16,9 @@ export async function handleApplication(scope) {
     // Create a SyncEngine for each table
     // NOTE: This is a simple sequential loop for now. In the future, this can easily be
     // refactored to create parallel SyncEngines (one-line change to SyncOrchestrator pattern)
+    // TODO: Dynamically create Harper tables via Operations API instead of requiring schema.graphql
+    //       This would allow tables to be created based on BigQuery schema at runtime.
+    //       Operations API: https://docs.harperdb.io/docs/developers/operations-api
     const syncEngines = [];
 
     logger.info(`[handleApplication] Initializing sync for ${fullConfig.bigquery.tables.length} tables`);
