@@ -440,17 +440,23 @@ export class MultiTableOrchestrator {
   async verify(dataset) {
     console.log(`\n=== Verifying Data ===\n`);
 
-    const tables = ['vessel_metadata', 'port_events', 'vessel_positions'];
+    // Map table names to their timestamp columns
+    const tableConfigs = {
+      'vessel_metadata': 'last_updated',
+      'port_events': 'event_time',
+      'vessel_positions': 'timestamp'
+    };
+
     const results = {};
 
-    for (const table of tables) {
+    for (const [table, timestampCol] of Object.entries(tableConfigs)) {
       try {
         const [rows] = await this.bigquery.query({
           query: `
             SELECT
               COUNT(*) as count,
-              MIN(timestamp) as min_timestamp,
-              MAX(timestamp) as max_timestamp
+              MIN(${timestampCol}) as min_timestamp,
+              MAX(${timestampCol}) as max_timestamp
             FROM \`${this.projectId}.${dataset}.${table}\`
           `,
           location: this.location
