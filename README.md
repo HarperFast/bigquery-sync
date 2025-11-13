@@ -87,32 +87,41 @@ Each node:
 
 ## Installation
 
-### Option 1: Deploy on Fabric (Recommended)
+### Development
 
-1. Sign up at [fabric.harper.fast](https://fabric.harper.fast)
-2. Create a new application
-3. Upload this component
-4. Configure BigQuery credentials
-5. Component auto-deploys across your cluster
+For local development and testing:
 
-### Option 2: Self-Hosted
-
-1. Deploy Harper cluster (3+ nodes recommended) - [Quick start guide](https://docs.harperdb.io/docs/getting-started/quickstart)
-2. Configure clustering between nodes - [Clustering docs](https://docs.harperdb.io/docs/developers/replication)
-3. Copy this component to each node:
-
+1. Install Harper: [Quick start guide](https://docs.harperdb.io/docs/getting-started/quickstart)
+2. Clone this repository
+3. Install dependencies:
    ```bash
-   harper deploy bigquery-sync /path/to/component
+   npm install
    ```
-
-4. Configure `config.yaml` with BigQuery credentials:
+4. Configure `config.yaml` with your BigQuery credentials:
    ```yaml
    bigquery:
      projectId: your-project
-     dataset: your_dataset
-     table: your_table
-     credentials: /path/to/service-account.json
+     credentials: /path/to/service-account-key.json
+     location: US
+
+     tables:
+       - id: vessel_positions
+         dataset: your_dataset
+         table: your_table
+         timestampColumn: timestamp
+         columns: ['*']
+         targetTable: BigQueryData
    ```
+5. Run in development mode:
+   ```bash
+   harper dev .
+   ```
+
+This starts Harper in development mode with auto-reload, running the plugin locally.
+
+### Production
+
+Production deployment instructions coming soon. For now, use development mode for testing and validation.
 
 ## Configuration
 
