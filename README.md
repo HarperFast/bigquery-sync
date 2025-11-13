@@ -73,6 +73,9 @@ npx maritime-data-synthesizer initialize realistic
 - **[5-Minute Quick Start](docs/quickstart.md)** - Get generating data immediately
 - **[System Overview](docs/system-overview.md)** - How plugin + synthesizer work together
 - **[Full Guide](docs/maritime-synthesizer.md)** - Comprehensive synthesizer documentation
+- **[Design Document](docs/design-document.md)** - Architecture decisions and technical design
+- **[Security](docs/security.md)** - Security considerations and best practices
+- **[Project History](docs/HISTORY.md)** - Development milestones and feature evolution
 
 ## Architecture
 
