@@ -64,6 +64,7 @@ export class MultiTableOrchestrator {
 		this.isRunning = false;
 		this.generationTimer = null;
 		this.cleanupTimer = null;
+		this.cleanupScheduleTimeout = null; // Track the initial setTimeout for cleanup
 		this.stats = {
 			totalBatchesGenerated: 0,
 			totalRecordsInserted: 0,
@@ -650,7 +651,7 @@ export class MultiTableOrchestrator {
 			this.generationTimer = setInterval(() => this.generateAndInsertBatch(dataset), this.config.generationIntervalMs);
 
 			// Start cleanup loop
-			setTimeout(() => {
+			this.cleanupScheduleTimeout = setTimeout(() => {
 				this.cleanupOldData(dataset);
 				this.cleanupTimer = setInterval(
 					() => this.cleanupOldData(dataset),
@@ -686,6 +687,11 @@ export class MultiTableOrchestrator {
 		if (this.generationTimer) {
 			clearInterval(this.generationTimer);
 			this.generationTimer = null;
+		}
+
+		if (this.cleanupScheduleTimeout) {
+			clearTimeout(this.cleanupScheduleTimeout);
+			this.cleanupScheduleTimeout = null;
 		}
 
 		if (this.cleanupTimer) {
