@@ -427,32 +427,92 @@ This pattern applies beyond BigQuery and Harper—anywhere you need large-scale 
 
 ---
 
-## Testing at Scale
+## What's Shipped (v2.0)
 
-To validate this architecture with realistic workloads, we built the **Maritime Vessel Data Synthesizer**:
+### Multi-Table Support ✅
 
-**What it does:**
+The plugin now supports **multiple BigQuery tables** simultaneously:
 
-- Generates 100,000+ vessel positions with realistic movement patterns
-- Simulates global maritime traffic across 29 major ports
-- Produces 144,000+ records/day to BigQuery
-- Uses the same `config.yaml` configuration as the plugin
+```yaml
+bigquery:
+  projectId: your-project
+  credentials: service-account-key.json
+  location: US
 
-**Why it matters:**
+  tables:
+    - id: vessel_positions
+      dataset: maritime_tracking
+      table: vessel_positions
+      columns: [timestamp, mmsi, latitude, longitude]
+      targetTable: VesselPositions
+      sync:
+        initialBatchSize: 10000
 
-- Test the full ingestion pipeline without production data
-- Validate partition distribution across nodes
-- Load test with millions of records
-- Privacy-compliant development and testing
+    - id: port_events
+      dataset: maritime_tracking
+      table: port_events
+      columns: ['*']
+      targetTable: PortEvents
+      sync:
+        initialBatchSize: 5000
+```
+
+**Key features:**
+
+- Independent sync configuration per table
+- Column selection to reduce BigQuery data transfer costs
+- Per-table validation and monitoring
+- Isolated checkpoints - one table failure doesn't affect others
+- Backward compatible with single-table configuration
+
+### Testing at Scale ✅
+
+The **Maritime Vessel Data Synthesizer** generates realistic test data:
+
+- 100,000+ vessels with physics-based movement patterns
+- 29 major ports worldwide with weighted traffic distribution
+- 3-table architecture (positions, events, metadata)
+- Multiple test scenarios: small, realistic, stress
+- Uses the same `config.yaml` as the plugin
 
 **Quick start:**
 
 ```bash
-npx maritime-data-synthesizer initialize 30  # Load 30 days
-npx maritime-data-synthesizer start          # Continuous generation
+npx maritime-data-synthesizer initialize realistic
 ```
 
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) for the 5-minute setup guide or [MARITIME-SYNTHESIZER-README.md](../MARITIME-SYNTHESIZER-README.md) for feature details.
+See [quickstart.md](quickstart.md) for the 5-minute setup guide.
+
+---
+
+## What's Next (v3.0 Roadmap)
+
+### Multi-Threaded Ingestion 📋
+
+Currently, each Harper node runs a single sync thread per table. Future enhancements:
+
+- **Multiple worker threads per node** - Better resource utilization
+- **Thread-level checkpointing** - Fine-grained recovery per worker
+- **Automatic thread scaling** - Adjust workers based on lag
+
+The code already supports durable thread identity via `hostname-workerIndex` that persists across restarts.
+
+### Dynamic Rebalancing 📋
+
+The current constraint is stable cluster topology. Future work:
+
+- **Automatic rebalancing protocol** - Detect topology changes → pause → recalculate → resume
+- **Graceful node additions/removals** - No manual intervention required
+- **Zero-downtime scaling** - Add/remove nodes without stopping sync
+
+This enables true autoscaling but isn't critical yet—quarterly capacity planning works fine for current needs.
+
+### Production Deployment Tools 📋
+
+- **Fabric deployment guide** - One-click deploy to Harper Fabric
+- **Self-hosted installation** - Detailed setup for on-premise clusters
+- **Monitoring dashboards** - Pre-built Grafana/CloudWatch templates
+- **Operational runbooks** - Standard procedures for common scenarios
 
 ---
 
@@ -464,6 +524,8 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for the 5-minute setup guide or [MA
 
 **Resources:**
 
-- [Design Document](#) — Full technical details
-- [GitHub Repository](#) — Complete implementation
+- [Design Document](design-document.md) — Full technical details
+- [Project History](HISTORY.md) — Development milestones
+- [System Overview](system-overview.md) — Architecture and how it all works together
+- [GitHub Repository](https://github.com/HarperFast/harper-bigquery-sync) — Complete implementation
 - [HarperDB Docs](https://docs.harperdb.io) — Platform documentation
