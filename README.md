@@ -195,7 +195,7 @@ bigquery:
   location: US
 
   # Optional retry configuration (defaults shown)
-  maxRetries: 5           # Maximum number of retry attempts
+  maxRetries: 5 # Maximum number of retry attempts
   initialRetryDelay: 1000 # Initial delay in milliseconds (doubles each retry)
 
   tables:
@@ -211,6 +211,7 @@ bigquery:
 - **Logging**: Warnings on retry attempts, errors on final failure with detailed error information
 
 **Example backoff delays** (with jitter):
+
 - Attempt 1: 1000-2000ms
 - Attempt 2: 2000-4000ms
 - Attempt 3: 4000-8000ms
