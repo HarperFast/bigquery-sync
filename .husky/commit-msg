@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Parse commit message for issue references and keywords
+# Formats supported:
+#   "Fixes #3", "Closes #3", "Resolves #3" - Will close the issue and mark TODO as done
+#   "Updates #3", "Refs #3", "See #3" - Will comment on the issue
+#   "TODO #3: description" - Will update TODO.md
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Extract issue numbers and keywords
+if echo "$COMMIT_MSG" | grep -qE "(Fixes|Closes|Resolves) #[0-9]+"; then
+  ISSUE_NUM=$(echo "$COMMIT_MSG" | grep -oE "(Fixes|Closes|Resolves) #[0-9]+" | grep -oE "[0-9]+" | head -1)
+
+  echo "🔄 Will close issue #$ISSUE_NUM after push"
+
+  # Mark as done in TODO.md (will be handled by post-commit hook)
+  echo "$ISSUE_NUM" >> .git/CLOSED_ISSUES
+fi
+
+# Check for update references
+if echo "$COMMIT_MSG" | grep -qE "(Updates|Refs|See) #[0-9]+"; then
+  ISSUE_NUM=$(echo "$COMMIT_MSG" | grep -oE "(Updates|Refs|See) #[0-9]+" | grep -oE "[0-9]+" | head -1)
+
+  echo "📝 Will comment on issue #$ISSUE_NUM after push"
+
+  # Save for post-commit hook
+  echo "$ISSUE_NUM" >> .git/UPDATE_ISSUES
+fi
+
+exit 0
