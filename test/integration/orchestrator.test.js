@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { MultiTableOrchestrator } from '../../ext/maritime-data-synthesizer/multi-table-orchestrator.js';
+import { MultiTableOrchestrator } from '../../tools/maritime-data-synthesizer/multi-table-orchestrator.js';
 import { TEST_SCENARIOS } from '../fixtures/multi-table-test-data.js';
 
 describe('Multi-Table Orchestrator Integration', () => {

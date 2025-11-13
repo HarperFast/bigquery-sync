@@ -2,10 +2,15 @@
 
 /**
  * Maritime Vessel Data Synthesizer CLI
+ *
+ * Command-line tool for generating synthetic maritime test data to BigQuery.
+ * Uses the data generators from tools/maritime-data-synthesizer/
+ *
+ * This is a standalone utility - the main BigQuery sync plugin is in src/
  */
 
 import { MaritimeDataSynthesizer } from '../src/maritime-synthesizer.js';
-import { MultiTableOrchestrator } from '../ext/maritime-data-synthesizer/multi-table-orchestrator.js';
+import { MultiTableOrchestrator } from '../tools/maritime-data-synthesizer/multi-table-orchestrator.js';
 import { getSynthesizerConfig } from '../src/config-loader.js';
 
 const COMMANDS = {

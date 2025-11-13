@@ -11,6 +11,6 @@ coverage/
 # Example files with intentional YAML syntax (multiple config examples in one file)
 examples/column-selection-config.yaml
 
-# External packages
-ext/
+# Tools and utilities
+tools/
 

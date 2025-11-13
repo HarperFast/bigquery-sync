@@ -4,7 +4,7 @@ export default [
 	...harperConfig,
 	// Custom configuration for BigQuery sync plugin
 	{
-		ignores: ['dist/', 'node_modules/', 'coverage/', 'ext/maritime-data-synthesizer/**', 'examples/**'],
+		ignores: ['dist/', 'node_modules/', 'coverage/', 'tools/maritime-data-synthesizer/**', 'examples/**'],
 	},
 	{
 		rules: {

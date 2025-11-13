@@ -4,7 +4,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { VesselPositionsGenerator } from '../ext/maritime-data-synthesizer/generators/vessel-positions-generator.js';
+import { VesselPositionsGenerator } from '../tools/maritime-data-synthesizer/generators/vessel-positions-generator.js';
 
 describe('VesselPositionsGenerator', () => {
 	describe('Constructor', () => {
