@@ -94,6 +94,7 @@ function normalizeConfig(config) {
 
 	// Create normalized multi-table config
 	const normalizedConfig = {
+		operations: config.operations, // Preserve operations config if present
 		bigquery: {
 			projectId: legacyBigQueryConfig.projectId,
 			credentials: legacyBigQueryConfig.credentials,
