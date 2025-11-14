@@ -21,7 +21,7 @@ operations:
   host: localhost
   port: 9925
   username: admin
-  password: password  # Change this to your Harper password
+  password: password # Change this to your Harper password
 
 # Multi-Table BigQuery Configuration
 bigquery:
