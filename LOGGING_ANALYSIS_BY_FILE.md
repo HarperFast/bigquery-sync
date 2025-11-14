@@ -5,6 +5,7 @@
 ### CATEGORY 1: PRODUCTION CODE - USING LOGGER (Grafana-Ready)
 
 #### src/sync-engine.js (70+ logger calls)
+
 - **Type**: Core sync engine implementation
 - **Status**: EXCELLENT - Comprehensive logging coverage
 - **Logger Usage**:
@@ -31,6 +32,7 @@
 ---
 
 #### src/bigquery-client.js (40+ logger calls)
+
 - **Type**: BigQuery API client with retry logic
 - **Status**: EXCELLENT - Well-instrumented
 - **Logger Usage**:
@@ -57,6 +59,7 @@
 ---
 
 #### src/validation.js (30+ logger calls)
+
 - **Type**: Data validation and integrity checks
 - **Status**: GOOD - Adequate logging
 - **Logger Usage**:
@@ -83,6 +86,7 @@
 ---
 
 #### src/resources.js (15+ logger calls)
+
 - **Type**: Harper resource layer (GraphQL/REST endpoints)
 - **Status**: GOOD - Adequate logging
 - **Logger Usage**:
@@ -104,6 +108,7 @@
 ---
 
 #### src/index.js (15+ logger calls)
+
 - **Type**: Plugin entry point and initialization
 - **Status**: GOOD - Covers key lifecycle events
 - **Logger Usage**:
@@ -124,6 +129,7 @@
 ---
 
 #### src/operations-client.js (10+ logger calls)
+
 - **Type**: Harper Operations API client
 - **Status**: FAIR - Minimal coverage
 - **Logger Usage**:
@@ -143,6 +149,7 @@
 ### CATEGORY 2: CORE CODE - MISSING LOGGING (Blind Spots)
 
 #### src/schema-manager.js (0 logger calls) ⚠️ CRITICAL
+
 - **Type**: Harper table schema creation and migration
 - **Status**: POOR - No logging instrumentation
 - **Critical Operations Without Visibility**:
@@ -167,6 +174,7 @@
 ---
 
 #### src/config-loader.js (0 logger calls) ⚠️ IMPORTANT
+
 - **Type**: Configuration file loading and validation
 - **Status**: POOR - No logging
 - **Critical Operations Without Visibility**:
@@ -187,6 +195,7 @@
 ---
 
 #### src/type-mapper.js (0 logger calls) ⚠️ IMPORTANT
+
 - **Type**: BigQuery ↔ Harper type conversion
 - **Status**: POOR - No logging
 - **Critical Operations Without Visibility**:
@@ -204,6 +213,7 @@
 ---
 
 #### src/type-converter.js (0 logger calls) ⚠️ IMPORTANT
+
 - **Type**: Runtime type conversion from BigQuery to JavaScript
 - **Status**: POOR - No logging
 - **Critical Operations Without Visibility**:
@@ -221,6 +231,7 @@
 ---
 
 #### src/query-builder.js (0 logger calls) ⚠️ IMPORTANT
+
 - **Type**: BigQuery SQL query generation
 - **Status**: POOR - No logging
 - **Critical Operations Without Visibility**:
@@ -238,6 +249,7 @@
 ---
 
 #### src/index-strategy.js (0 logger calls) ⚠️ MINOR
+
 - **Type**: Harper index strategy selection
 - **Status**: POOR - No logging
 - **Operations Without Visibility**:
@@ -248,6 +260,7 @@
 ---
 
 #### src/validators.js (0 logger calls) ⚠️ MINOR
+
 - **Type**: Validation rule definitions
 - **Status**: POOR - No logging
 - **Recommendation**: Add 5-10 logger calls
@@ -257,6 +270,7 @@
 ### CATEGORY 3: UTILITY/LEGACY CODE - USING CONSOLE (Not Grafana-Ready)
 
 #### src/bigquery.js (23 console.log/error calls) ⚠️ NEEDS MIGRATION
+
 - **Type**: Legacy maritime data synthesizer - BigQuery client
 - **Status**: NEEDS MIGRATION - Uses console instead of logger
 - **Console Usage**:
@@ -280,6 +294,7 @@
 ---
 
 #### src/service.js (45 console.log/error calls) ⚠️ NEEDS MIGRATION
+
 - **Type**: Legacy maritime data synthesizer - Service orchestrator
 - **Status**: NEEDS MIGRATION - Heavy console usage
 - **Console Usage**:
@@ -301,6 +316,7 @@
 ---
 
 #### src/generator.js (2 console.log calls) ⚠️ MINOR MIGRATION
+
 - **Type**: Legacy maritime data synthesizer - Generator
 - **Status**: MINIMAL - Only 2 console calls
 - **Console Usage**:
@@ -314,6 +330,7 @@
 ### CATEGORY 4: COMPONENTS - PARTIAL/MINIMAL LOGGING
 
 #### src/schema-leader-election.js (MINIMAL)
+
 - **Status**: FAIR - Minimal logging coverage
 - **Missing**: Leader election attempts, conflicts, state changes
 - **Recommendation**: Add 10+ logger calls for election logic
@@ -322,19 +339,20 @@
 
 ### LOGGING STATISTICS SUMMARY
 
-| Category | Files | Logger Calls | Console Calls | Status |
-|----------|-------|--------------|---------------|--------|
-| Production Core | 7 | 185 | 0 | EXCELLENT |
-| Missing Logging | 7 | 0 | 0 | POOR |
-| Legacy Synthesizer | 3 | 0 | 70 | NEEDS MIGRATION |
-| Partial/Other | 2 | ~17 | 0 | FAIR |
-| **TOTALS** | **19** | **202** | **70** | **74% COVERAGE** |
+| Category           | Files  | Logger Calls | Console Calls | Status           |
+| ------------------ | ------ | ------------ | ------------- | ---------------- |
+| Production Core    | 7      | 185          | 0             | EXCELLENT        |
+| Missing Logging    | 7      | 0            | 0             | POOR             |
+| Legacy Synthesizer | 3      | 0            | 70            | NEEDS MIGRATION  |
+| Partial/Other      | 2      | ~17          | 0             | FAIR             |
+| **TOTALS**         | **19** | **202**      | **70**        | **74% COVERAGE** |
 
 ---
 
 ## Migration Priority Matrix
 
 ### Priority 1: CRITICAL (Block Issue #11)
+
 - [ ] src/schema-manager.js - Add 20 logging points
 - [ ] src/bigquery.js - Migrate 23 console calls
 - [ ] src/service.js - Migrate 45 console calls
@@ -343,6 +361,7 @@
 **Effort**: 1-2 days | **Impact**: Enables complete monitoring
 
 ### Priority 2: IMPORTANT (Improve Visibility)
+
 - [ ] src/config-loader.js - Add 10 logging points
 - [ ] src/type-mapper.js - Add 10 logging points
 - [ ] src/type-converter.js - Add 10 logging points
@@ -351,6 +370,7 @@
 **Effort**: 2-3 days | **Impact**: Better debugging
 
 ### Priority 3: NICE-TO-HAVE (Polish)
+
 - [ ] src/index-strategy.js - Add 5 logging points
 - [ ] src/validators.js - Add 5 logging points
 - [ ] src/schema-leader-election.js - Add 10 logging points
@@ -362,18 +382,20 @@
 ## Code Examples for Migration
 
 ### Pattern 1: Simple Info Logging
+
 ```javascript
 // BEFORE (console)
 console.log(`Dataset ${this.datasetId} created`);
 
 // AFTER (logger + optional console)
 if (process.env.LOGGING_MODE === 'cli') {
-    console.log(`Dataset ${this.datasetId} created`);
+	console.log(`Dataset ${this.datasetId} created`);
 }
 logger.info(`[MaritimeBigQueryClient] Dataset ${this.datasetId} created`);
 ```
 
 ### Pattern 2: Error Logging
+
 ```javascript
 // BEFORE (console)
 console.error('Error loading data:', error);
@@ -383,6 +405,7 @@ logger.error(`[MaritimeDataSynthesizer] Error loading data: ${error.message}`, e
 ```
 
 ### Pattern 3: Progress Tracking
+
 ```javascript
 // BEFORE (console)
 console.log(`Loaded ${recordsInserted} records in ${totalTime} minutes`);
@@ -392,6 +415,7 @@ logger.info(`[MaritimeDataSynthesizer] Loaded ${recordsInserted} records in ${to
 ```
 
 ### Pattern 4: Missing Component Logging
+
 ```javascript
 // NEW: Add to schema-manager.js
 logger.info('[SchemaManager] Ensuring table exists...');
@@ -399,9 +423,9 @@ logger.debug(`[SchemaManager] Checking if Harper table '${tableName}' exists`);
 logger.info('[SchemaManager] Building BigQuery schema...');
 const migration = this.determineMigrationNeeds(harperSchema, bigQuerySchema);
 if (migration.action === 'create') {
-    logger.info(`[SchemaManager] Creating new table with ${Object.keys(migration.attributesToAdd).length} attributes`);
+	logger.info(`[SchemaManager] Creating new table with ${Object.keys(migration.attributesToAdd).length} attributes`);
 } else if (migration.action === 'migrate') {
-    logger.info(`[SchemaManager] Migrating table - adding ${Object.keys(migration.attributesToAdd).length} attributes`);
+	logger.info(`[SchemaManager] Migrating table - adding ${Object.keys(migration.attributesToAdd).length} attributes`);
 }
 ```
 
@@ -442,4 +466,3 @@ Once logging migration complete:
    - Alert configuration
    - Log query examples
    - Troubleshooting guide
-

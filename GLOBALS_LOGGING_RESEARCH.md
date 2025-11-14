@@ -4,8 +4,8 @@
 
 This research investigates the HarperDB globals logging system as it relates to issue #11 (Enhanced monitoring and observability). The current codebase has a **mixed logging approach** where:
 
-- **202 logger.* calls** properly use HarperDB's global logger (for Grafana integration)
-- **70 console.* calls** bypass the logging system entirely
+- **202 logger.\* calls** properly use HarperDB's global logger (for Grafana integration)
+- **70 console.\* calls** bypass the logging system entirely
 - Only 3 files use console logging directly (bigquery.js, generator.js, service.js)
 
 The **globals.js implementation uses a singleton pattern**, which is appropriate for this use case and aligns with HarperDB's architecture.
@@ -17,6 +17,7 @@ The **globals.js implementation uses a singleton pattern**, which is appropriate
 ### What is Globals?
 
 The `globals` system in HarperDB is a key-value store that persists data at the application level, surviving across requests. It's commonly used for:
+
 - Caching shared state
 - Maintaining singleton instances
 - Storing application configuration
@@ -27,13 +28,13 @@ The `globals` system in HarperDB is a key-value store that persists data at the 
 HarperDB provides a **global `logger` object** that is automatically available in plugin code:
 
 ```javascript
-logger.trace()      // Detailed diagnostic information
-logger.debug()      // Debug-level messages
-logger.info()       // General informational messages
-logger.warn()       // Warning messages
-logger.error()      // Error messages
-logger.fatal()      // Fatal error messages
-logger.notify()     // Notifications
+logger.trace(); // Detailed diagnostic information
+logger.debug(); // Debug-level messages
+logger.info(); // General informational messages
+logger.warn(); // Warning messages
+logger.error(); // Error messages
+logger.fatal(); // Fatal error messages
+logger.notify(); // Notifications
 ```
 
 **Key Point:** The `logger` global writes to Harper's centralized logging system, which can be **integrated with Grafana** for monitoring and observability. Console.log output bypasses this system entirely and goes to stdout/stderr.
@@ -46,19 +47,19 @@ logger.notify()     // Notifications
 
 ```javascript
 class Globals {
-    constructor() {
-        if (Globals.instance) {
-            return Globals.instance;  // Singleton pattern
-        }
-        this.data = {};
-        Globals.instance = this;
-    }
-    set(key, value) {
-        this.data[key] = value;
-    }
-    get(key) {
-        return this.data[key];
-    }
+	constructor() {
+		if (Globals.instance) {
+			return Globals.instance; // Singleton pattern
+		}
+		this.data = {};
+		Globals.instance = this;
+	}
+	set(key, value) {
+		this.data[key] = value;
+	}
+	get(key) {
+		return this.data[key];
+	}
 }
 
 const globals = new Globals();
@@ -80,6 +81,7 @@ export default Globals;
 Files using globals:
 
 1. **`src/index.js`** - Entry point stores SyncEngines:
+
    ```javascript
    globals.set('syncEngines', syncEngines);
    globals.set('syncEngine', syncEngines[0]);
@@ -88,6 +90,7 @@ Files using globals:
    ```
 
 2. **`src/resources.js`** - Resource layer retrieves engines:
+
    ```javascript
    await globals.get('syncEngine').getStatus();
    await globals.get('validator').runValidation();
@@ -101,13 +104,13 @@ Files using globals:
 
 ### Statistics
 
-| Metric | Count |
-|--------|-------|
+| Metric                              | Count |
+| ----------------------------------- | ----- |
 | Total lines of src/ JavaScript code | 4,517 |
-| Logger.* calls | 202 |
-| Console.* calls | 70 |
-| Files using console directly | 3 |
-| Files using logger | 11+ |
+| Logger.\* calls                     | 202   |
+| Console.\* calls                    | 70    |
+| Files using console directly        | 3     |
+| Files using logger                  | 11+   |
 
 ### Files Using Console (Logging Not via Grafana)
 
@@ -125,27 +128,27 @@ Files using globals:
 
 ### Files Using Logger (Grafana-Integrated)
 
-1. **`src/sync-engine.js`** - 70+ logger.* calls
+1. **`src/sync-engine.js`** - 70+ logger.\* calls
    - Constructor, initialization, sync cycles
    - Cluster discovery, checkpoint management
    - Record ingestion and error handling
 
-2. **`src/bigquery-client.js`** - 40+ logger.* calls
+2. **`src/bigquery-client.js`** - 40+ logger.\* calls
    - Retry logic with exponential backoff
    - Query execution and performance tracking
    - Error categorization (retryable vs. fatal)
 
-3. **`src/validation.js`** - 30+ logger.* calls
+3. **`src/validation.js`** - 30+ logger.\* calls
    - Validation suite progress
    - Checkpoint validation
    - Smoke tests and spot checks
 
-4. **`src/resources.js`** - 15+ logger.* calls
+4. **`src/resources.js`** - 15+ logger.\* calls
    - Resource layer operations
    - Sync control endpoints
    - Data retrieval operations
 
-5. **`src/index.js`** - 15+ logger.* calls
+5. **`src/index.js`** - 15+ logger.\* calls
    - Application initialization
    - Schema manager setup
    - Engine lifecycle
@@ -163,6 +166,7 @@ Files using globals:
 ### Types of Information Being Logged
 
 #### Info Level (Progress & State Changes)
+
 - Component initialization
 - Cluster topology discovery
 - Sync cycle start/end
@@ -171,6 +175,7 @@ Files using globals:
 - BigQuery operations completion
 
 Example:
+
 ```javascript
 logger.info(`[SyncEngine.initialize] Sync started - initializing with ${tableConfig.id}`);
 logger.info(`[SyncEngine.runSyncCycle] Received ${records.length} records from BigQuery`);
@@ -178,6 +183,7 @@ logger.info(`[SyncEngine.updatePhase] Phase transition: ${oldPhase} -> ${this.cu
 ```
 
 #### Debug Level (Detailed Tracing)
+
 - Method entry/exit
 - Parameter values
 - Intermediate calculations
@@ -185,30 +191,35 @@ logger.info(`[SyncEngine.updatePhase] Phase transition: ${oldPhase} -> ${this.cu
 - Retry attempt tracking
 
 Example:
+
 ```javascript
 logger.debug(`[SyncEngine.initialize] Discovering cluster topology`);
 logger.debug(`[BigQueryClient.pullPartition] Query parameters - lastTimestamp: ${lastTimestamp}`);
 ```
 
 #### Warn Level (Recoverable Issues)
+
 - Missing or skipped records
 - Transient errors being retried
 - Deprecated configurations
 - Non-fatal validation failures
 
 Example:
+
 ```javascript
 logger.warn(`[SyncEngine.ingestRecords] Missing timestamp column '${timestampColumn}', skipping record`);
 logger.warn(`[BigQueryClient.pullPartition] Transient error - retrying in ${delay}ms`);
 ```
 
 #### Error Level (Failures Requiring Attention)
+
 - Unrecoverable failures
 - Invalid data
 - Missing configuration
 - Operation failures
 
 Example:
+
 ```javascript
 logger.error(`[SyncEngine.runSyncCycle] Sync cycle error: ${error.message}`);
 logger.error(`[SyncEngine.loadCheckpoint] Invalid timestamp: ${checkpoint.lastTimestamp}`);
@@ -269,9 +280,11 @@ logger.error(`[SyncEngine.loadCheckpoint] Invalid timestamp: ${checkpoint.lastTi
 The codebase currently implements **distributed multi-node ingestion**, not true multi-threading:
 
 1. **Cluster Discovery** (`src/sync-engine.js`):
+
    ```javascript
    const currentNodeId = [server.hostname, server.workerIndex].join('-');
    ```
+
    - Uses `server.workerIndex` from HarperDB's worker context
    - Multiple nodes discovered via `server.nodes` array
 
@@ -288,6 +301,7 @@ The codebase currently implements **distributed multi-node ingestion**, not true
 ### Threading Analysis
 
 **Current usage of `server.workerIndex`**:
+
 - Combines with hostname for unique node identity
 - Enables multiple workers on same host to have different IDs
 - No actual worker threads are created in the code
@@ -295,6 +309,7 @@ The codebase currently implements **distributed multi-node ingestion**, not true
 
 **Future Threading Consideration (Issue #9)**:
 If multi-threaded ingestion is added in the future:
+
 - Singleton globals would remain thread-safe within Harper's concurrency model
 - Per-thread checkpoints may be needed: `{tableId}_{nodeId}_{threadId}`
 - Logger calls should remain as-is (HarperDB logger handles concurrency)
@@ -320,31 +335,33 @@ If multi-threaded ingestion is added in the future:
 ### Assessment for This Codebase
 
 **Verdict**: Singleton pattern is **appropriate** for:
+
 - Single Harper plugin instance context
 - Cluster-distributed (not thread-distributed) workloads
 - Current architecture with one engine per instance
 
 **Minor Enhancement Opportunity**:
+
 ```javascript
 class Globals {
-    constructor() {
-        if (Globals.instance) return Globals.instance;
-        this.data = {};
-        this.version = '1.0.0';
-        this.createdAt = new Date();
-        Globals.instance = this;
-    }
-    
-    set(key, value) {
-        this.data[key] = value;
-        logger.debug(`[Globals] Set ${key} = ${typeof value}`);
-    }
-    
-    get(key) {
-        const value = this.data[key];
-        if (!value) logger.warn(`[Globals] Key '${key}' not found`);
-        return value;
-    }
+	constructor() {
+		if (Globals.instance) return Globals.instance;
+		this.data = {};
+		this.version = '1.0.0';
+		this.createdAt = new Date();
+		Globals.instance = this;
+	}
+
+	set(key, value) {
+		this.data[key] = value;
+		logger.debug(`[Globals] Set ${key} = ${typeof value}`);
+	}
+
+	get(key) {
+		const value = this.data[key];
+		if (!value) logger.warn(`[Globals] Key '${key}' not found`);
+		return value;
+	}
 }
 ```
 
@@ -354,30 +371,32 @@ class Globals {
 
 ### High Priority
 
-| File | console calls | Type | Priority |
-|------|---|---|---|
-| `src/bigquery.js` | 23 | Legacy synthesizer | HIGH |
-| `src/service.js` | 45 | Legacy synthesizer | HIGH |
-| `src/generator.js` | 2 | Legacy synthesizer | HIGH |
+| File               | console calls | Type               | Priority |
+| ------------------ | ------------- | ------------------ | -------- |
+| `src/bigquery.js`  | 23            | Legacy synthesizer | HIGH     |
+| `src/service.js`   | 45            | Legacy synthesizer | HIGH     |
+| `src/generator.js` | 2             | Legacy synthesizer | HIGH     |
 
 ### Notes on Synthesizer Files
 
 These files (bigquery.js, service.js, generator.js) are the **legacy maritime data synthesizer** used for test data generation. They output to console for CLI feedback.
 
 **Migration Strategy**:
+
 1. Keep console output for backward compatibility with CLI
-2. Add logger.* calls for production deployment within Harper
+2. Add logger.\* calls for production deployment within Harper
 3. Use environment variable to control output level
 
 Example pattern:
+
 ```javascript
 const ENV_LOGGING_MODE = process.env.LOGGING_MODE || 'cli';
 
 function logProgress(message) {
-    if (ENV_LOGGING_MODE === 'cli') {
-        console.log(message);
-    }
-    logger.info(`[Synthesizer] ${message}`);
+	if (ENV_LOGGING_MODE === 'cli') {
+		console.log(message);
+	}
+	logger.info(`[Synthesizer] ${message}`);
 }
 ```
 
@@ -399,15 +418,16 @@ function logProgress(message) {
    - Can create metrics and alerts
 
 3. **Monitoring Dashboards** (Issue #11 Goal):
+
    ```sql
    -- Count ingestion errors
-   | filter [SyncEngine] and level="ERROR" 
+   | filter [SyncEngine] and level="ERROR"
    | stats count by tableId
-   
+
    -- Track phase transitions
    | filter "Phase transition"
    | stats count by currentPhase
-   
+
    -- Monitor checkpoint lag
    | filter [SyncEngine.updatePhase]
    | extract lag:number
@@ -417,6 +437,7 @@ function logProgress(message) {
 ### Required Logging for Grafana Monitoring
 
 To build effective dashboards (Issue #11), need to log:
+
 1. **Performance metrics**: Query times, batch sizes, throughput
 2. **Health indicators**: Phase transitions, checkpoint progress, lag
 3. **Error patterns**: Failure types, retry attempts, recovery actions
@@ -470,11 +491,13 @@ To build effective dashboards (Issue #11), need to log:
 ## 11. Documentation References
 
 ### HarperDB Official Documentation
+
 - **Globals Reference**: https://docs.harperdb.io/docs/technical-details/reference/globals
 - **Debugging Applications**: https://docs.harperdb.io/docs/developers/applications/debugging
 - **Standard Logging**: https://docs.harperdb.io/docs/administration/logging/logging
 
 ### Available Logger Methods
+
 - `logger.trace()` - Most detailed diagnostic information
 - `logger.debug()` - Debugging information
 - `logger.info()` - General informational messages
@@ -484,6 +507,7 @@ To build effective dashboards (Issue #11), need to log:
 - `logger.notify()` - Special notification messages
 
 ### Project Issue References
+
 - **#11** (THIS): Enhanced monitoring and observability with Grafana
 - **#9**: Multi-threaded ingestion per node
 - **#10**: Dynamic rebalancing for autoscaling
@@ -502,4 +526,3 @@ The codebase is **well-structured for Grafana integration** via HarperDB's globa
 6. 🎯 **Ready for Issue #11 implementation** with minor additions
 
 The main work for issue #11 will be creating the Grafana dashboards and alert configurations, not modifying the logging system itself. The groundwork is already in place.
-
