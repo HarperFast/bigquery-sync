@@ -15,6 +15,65 @@ This repository contains two components:
 
 See [System Overview](docs/system-overview.md) for how they work together, or jump to [Maritime Synthesizer Quick Start](docs/quickstart.md) to start generating test data in 5 minutes.
 
+## Why Maritime Data?
+
+The maritime data synthesizer provides a **realistic, production-grade test environment** for validating BigQuery sync plugins. Here's why we chose vessel tracking data:
+
+### Characteristics That Match Real-World Sync Challenges
+
+**High Volume & Continuous Flow**
+
+- 100,000+ vessels generating position reports every minute
+- Realistic throughput: 144K+ records/day sustained
+- Tests sync performance under production-like loads
+
+**Temporal Ordering Constraints**
+
+- Vessel positions MUST maintain chronological order
+- Late-arriving data and out-of-order records are common
+- Perfect for validating timestamp-based partitioning
+
+**Geospatial & Complex Schema**
+
+- Lat/lon coordinates, heading, speed, vessel metadata
+- Multiple related tables (positions, port events, vessel info)
+- Tests type mapping, nested data, and multi-table sync
+
+**Production Use Case Representation**
+
+Maritime data mirrors common BigQuery workloads:
+
+- **IoT & Telemetry**: Sensor streams (temperature, GPS, metrics)
+- **Event Tracking**: User activity, application logs, analytics
+- **Time-Series Data**: Financial ticks, infrastructure monitoring
+- **Geospatial Analysis**: Fleet management, delivery tracking, mobility
+
+### Benefits for Plugin Testing
+
+**Realistic Scale**: 100K vessels × 1-minute intervals = real production scale
+**Reproducible**: Deterministic patterns enable consistent testing
+**Multi-Table**: Positions, events, metadata test independent table sync
+**Global Distribution**: 29 ports worldwide test data distribution patterns
+**Physics-Based**: Realistic movement validates data integrity checks
+**Velocity Flexibility**: Adjustable data generation rates - test both slow streams (minutes between records) and fast streams (thousands per second)
+
+### When Maritime Data Is a Good Fit
+
+✅ You're syncing high-volume time-series data
+✅ You need to test distributed workload partitioning
+✅ You want to validate multi-table sync with relationships
+✅ You're evaluating plugin performance before production
+
+### When to Use Your Own Data
+
+Consider using domain-specific test data if:
+
+- Your schema has unique constraints (e.g., financial compliance)
+- You need specific data patterns not present in maritime tracking
+- You're testing industry-specific features (e.g., healthcare FHIR)
+
+The maritime synthesizer provides a **turnkey test environment** - no data preparation, realistic patterns, and production-scale volumes out of the box.
+
 ## Plugin Features
 
 - **Multi-Table Support**: Sync multiple BigQuery tables simultaneously with independent settings
