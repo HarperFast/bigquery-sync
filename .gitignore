@@ -33,5 +33,6 @@ service-account-key.json
 test-*.js
 !test/**/*.test.js
 
-# Internal docs (not for publication)
+# Historical development artifacts (not for publication)
 docs/internal/
+docs/plans/

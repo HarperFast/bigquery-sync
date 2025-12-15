@@ -126,13 +126,24 @@ generateBatch(count, timestampOffset = 0) {
 
 ## Testing
 
-Currently, we have example scripts rather than formal tests. When adding functionality:
+We have comprehensive unit tests for core functionality. When adding or modifying features:
 
-1. Create an example in `examples/` directory
-2. Document how to run it
-3. Verify it works on clean install
+1. Run the test suite: `npm test`
+2. Add tests for new functionality in `test/` directory
+3. Ensure all tests pass before submitting PR
+4. Test coverage includes:
+   - BigQuery client with retry logic
+   - Config loader for single and multi-table formats
+   - Sync engine with phase calculation
+   - Maritime data generators
+   - Multi-table orchestrator
 
-**Future**: We'll add proper unit and integration tests.
+**Example test run:**
+
+```bash
+npm test
+# All tests should pass (91 tests currently)
+```
 
 ## Documentation
 
@@ -147,19 +158,19 @@ If your change affects user-facing features:
 
 ### High Priority
 
-1. **Testing Infrastructure**
-   - Unit tests for generator
-   - Integration tests
-   - CI/CD pipeline
+1. **Production Operations**
+   - Deployment documentation for Fabric and self-hosted
+   - Monitoring dashboard templates (Grafana, CloudWatch)
+   - Operational runbooks for common scenarios
 
-2. **Error Handling**
-   - Better error messages
-   - Recovery strategies
-   - Validation improvements
+2. **Testing Expansion**
+   - Integration tests for end-to-end sync validation
+   - Performance benchmarks
+   - Multi-node cluster testing
 
 3. **Documentation**
-   - More examples
-   - Video tutorials
+   - Video tutorials (setup, configuration, troubleshooting)
+   - More real-world configuration examples
    - Architecture diagrams
 
 ### Medium Priority
@@ -194,9 +205,14 @@ The BigQuery plugin integrates with HarperDB. When modifying plugin code:
 
 **Key Files**:
 
-- `src/sync-engine.js` - Main sync engine logic
-- `src/validation.js` - Data validation
+- `src/index.js` - Plugin entry point and Harper integration
+- `src/sync-engine.js` - Core sync engine with adaptive batch sizing
+- `src/bigquery-client.js` - BigQuery API client with retry logic
+- `src/validation.js` - Data validation and auditing
+- `src/query-builder.js` - SQL query construction
+- `src/config-loader.js` - Configuration parsing (single/multi-table)
 - `schema/harper-bigquery-sync.graphql` - GraphQL schema
+- `test/` - Unit tests for all core functionality
 
 ## Synthesizer Development
 

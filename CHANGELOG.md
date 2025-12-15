@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- None yet
+
+### Changed
+
+- None yet
+
+### Fixed
+
+- None yet
+
+## [2.0.0] - 2025-12-15
+
+### Added
+
+- **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
+- **Column selection** - Reduce costs by fetching only needed columns from BigQuery
+- **Per-table configuration** - Independent batch sizes, sync intervals, and strategies per table
+- **Exponential backoff retry logic** - Smart retry with jitter for transient BigQuery errors
+- **Comprehensive logging** - Structured logging throughout codebase for Grafana observability
+- **Optional streaming insert API** - Configurable streaming inserts for production deployments
+- **Multi-table validation** - Independent validation and monitoring per table
+- **Multi-table maritime synthesizer** - Generate realistic data for multiple related tables
 - Rolling window mode for automatic data window maintenance
 - `clear` command to truncate table without deleting schema
 - Automatic backfill on service start
@@ -30,14 +52,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `start` command now auto-backfills by default (rolling window mode)
 - Documentation reorganized into logical sections
-- Test files moved to examples/ directory
+- Improved error messages and retry handling
+- Enhanced BigQuery client with smart retry logic
+- Better organization of codebase (src/ vs tools/)
 - Improved error messages and user feedback
 
 ### Fixed
 
+- Memory leak in journey tracking system
+- Checkpoint timestamp handling edge cases
+- Prettier formatting for markdown documentation
 - Configuration loading from config.yaml
 - BigQuery credential handling
 - Service account key path resolution
+
+### Documentation
+
+- Added streaming insert API design document
+- Enhanced logging analysis and research
+- Project history documentation
+- Multi-table configuration examples
+- "Why Maritime Data?" rationale section
+- Backward compatibility maintained with single-table format
 
 ## [1.0.0] - 2024-XX-XX
 
