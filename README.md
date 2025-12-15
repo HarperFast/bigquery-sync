@@ -1,196 +1,139 @@
 # BigQuery Sync Plugin for Harper
 
-Distributed data ingestion from Google BigQuery to Harper using modulo-based partitioning.
+**Production-ready distributed data ingestion from Google BigQuery to Harper.**
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 
 **About Harper:** Harper is a distributed application platform that unifies database, cache, and application server. [Learn more](https://harperdb.io)
 
-**Quick Start:** Deploy this component on [Harper Fabric](https://fabric.harper.fast) - no credit card required, free tier available.
+**Quick Deploy:** Launch this component on [Harper Fabric](https://fabric.harper.fast) - no credit card required, free tier available.
 
-## 📦 What's Included
+## Features (v2.0)
 
-This repository contains two components:
+✅ **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
+✅ **Column selection** - Reduce costs by fetching only needed columns from BigQuery
+✅ **Horizontal scalability** - Linear throughput increase with cluster size
+✅ **Adaptive batch sizing** - Automatically adjusts based on sync lag (initial/catchup/steady phases)
+✅ **Failure recovery** - Local checkpoints enable independent node recovery
+✅ **Exponential backoff** - Smart retry logic with jitter for transient BigQuery errors
+✅ **Production-ready** - Battle-tested with comprehensive logging for Grafana observability
+✅ **No coordination overhead** - Each node independently determines its workload via modulo partitioning
 
-1. **BigQuery Plugin** - Syncs data FROM BigQuery INTO Harper
-2. **Maritime Data Synthesizer** - Generates synthetic vessel data TO BigQuery for testing
+## Quick Start
 
-See [System Overview](docs/system-overview.md) for how they work together, or jump to [Maritime Synthesizer Quick Start](docs/quickstart.md) to start generating test data in 5 minutes.
+### 1. Install
 
-## Why Maritime Data?
-
-The maritime data synthesizer provides a **realistic, production-grade test environment** for validating BigQuery sync plugins. Here's why we chose vessel tracking data:
-
-### Characteristics That Match Real-World Sync Challenges
-
-**High Volume & Continuous Flow**
-
-- 100,000+ vessels generating position reports every minute
-- Realistic throughput: 144K+ records/day sustained
-- Tests sync performance under production-like loads
-
-**Temporal Ordering Constraints**
-
-- Vessel positions MUST maintain chronological order
-- Late-arriving data and out-of-order records are common
-- Perfect for validating timestamp-based partitioning
-
-**Geospatial & Complex Schema**
-
-- Lat/lon coordinates, heading, speed, vessel metadata
-- Multiple related tables (positions, port events, vessel info)
-- Tests type mapping, nested data, and multi-table sync
-
-**Production Use Case Representation**
-
-Maritime data mirrors common BigQuery workloads:
-
-- **IoT & Telemetry**: Sensor streams (temperature, GPS, metrics)
-- **Event Tracking**: User activity, application logs, analytics
-- **Time-Series Data**: Financial ticks, infrastructure monitoring
-- **Geospatial Analysis**: Fleet management, delivery tracking, mobility
-
-### Benefits for Plugin Testing
-
-**Realistic Scale**: 100K vessels × 1-minute intervals = real production scale
-**Reproducible**: Deterministic patterns enable consistent testing
-**Multi-Table**: Positions, events, metadata test independent table sync
-**Global Distribution**: 29 ports worldwide test data distribution patterns
-**Physics-Based**: Realistic movement validates data integrity checks
-**Velocity Flexibility**: Adjustable data generation rates - test both slow streams (minutes between records) and fast streams (thousands per second)
-
-### When Maritime Data Is a Good Fit
-
-✅ You're syncing high-volume time-series data
-✅ You need to test distributed workload partitioning
-✅ You want to validate multi-table sync with relationships
-✅ You're evaluating plugin performance before production
-
-### When to Use Your Own Data
-
-Consider using domain-specific test data if:
-
-- Your schema has unique constraints (e.g., financial compliance)
-- You need specific data patterns not present in maritime tracking
-- You're testing industry-specific features (e.g., healthcare FHIR)
-
-The maritime synthesizer provides a **turnkey test environment** - no data preparation, realistic patterns, and production-scale volumes out of the box.
-
-## Plugin Features
-
-- **Multi-Table Support**: Sync multiple BigQuery tables simultaneously with independent settings
-- **Horizontal Scalability**: Linear throughput increase with cluster size
-- **No Coordination**: Each node independently determines its workload
-- **Failure Recovery**: Local checkpoints enable independent node recovery
-- **Adaptive Polling**: Batch sizes adjust based on sync lag
-- **Continuous Validation**: Automatic data completeness checks across all tables
-- **Native Replication**: Leverages Harper's clustering for data distribution ([docs](https://docs.harperdb.io/docs/developers/replication))
-- **Generic Storage**: Stores complete BigQuery records without schema constraints
-
-## Maritime Synthesizer Features
-
-- **Realistic Data**: 100,000+ vessels with physics-based movement patterns
-- **Global Scale**: 29 major ports worldwide with weighted traffic distribution
-- **6 Vessel Types**: Container ships, bulk carriers, tankers, cargo, passenger, fishing
-- **Production-Ready**: 144K+ records/day with automatic retention management
-- **Easy Testing**: Perfect for validating the BigQuery plugin with realistic workloads
-- **Shared Config**: Uses the same `config.yaml` as the plugin - no duplicate setup
-
-### Running the Synthesizer
-
-The maritime synthesizer generates test data TO BigQuery, which the plugin then syncs FROM BigQuery to Harper.
-
-**Prerequisites:**
-
-1. GCP project with BigQuery enabled
-2. Service account key with BigQuery write permissions
-3. Update `config.yaml` with your BigQuery credentials
-
-**Quick Start:**
+Install Harper and add this plugin:
 
 ```bash
-# Install dependencies (if not already done)
-npm install
+# Install Harper
+# See https://docs.harperdb.io/docs/getting-started/quickstart
 
-# Generate test data - auto-detects mode from config.yaml
-npx maritime-data-synthesizer initialize realistic
+# Clone this plugin
+cd your-harper-project
+npm install @harperdb/harper-bigquery-sync
 ```
 
-**Available Commands:**
+### 2. Configure (Your Data)
 
-- `initialize <scenario>` - Generate test data (scenarios: small, realistic, stress)
-  - `small`: 100 positions, 10 events, 20 metadata (~1 hour of data)
-  - `realistic`: 10k positions, 500 events, 100 metadata (~24 hours)
-  - `stress`: 100k positions, 5k events, 1k metadata (~7 days)
-- `start` - Continuous generation with rolling window (single-table mode only)
-- `stats` - View BigQuery table statistics
-- `clear` - Clear all data (keeps schema)
-- `reset N` - Delete and reload with N days of data
+Edit `config.yaml` with your BigQuery connection and tables:
 
-**Note:** Both single-table and multi-table modes now support all commands including `start` for continuous generation with rolling windows.
+```yaml
+bigquery:
+  projectId: your-gcp-project
+  credentials: service-account-key.json
+  location: US
 
-**Documentation:**
+  tables:
+    # Example: Sync user events
+    - id: user_events
+      dataset: production
+      table: user_events
+      timestampColumn: event_time
+      columns: [event_time, user_id, event_type, properties]
+      targetTable: UserEvents
+      sync:
+        initialBatchSize: 10000
+        catchupBatchSize: 1000
+        steadyBatchSize: 500
 
-- **[5-Minute Quick Start](docs/quickstart.md)** - Get generating data immediately
-- **[System Overview](docs/system-overview.md)** - How plugin + synthesizer work together
-- **[Full Guide](docs/maritime-synthesizer.md)** - Comprehensive synthesizer documentation
-- **[Design Document](docs/design-document.md)** - Architecture decisions and technical design
-- **[Security](docs/security.md)** - Security considerations and best practices
-- **[Project History](docs/HISTORY.md)** - Development milestones and feature evolution
+    # Example: Sync application logs
+    - id: app_logs
+      dataset: production
+      table: application_logs
+      timestampColumn: timestamp
+      columns: ['*'] # Fetch all columns
+      targetTable: AppLogs
+      sync:
+        initialBatchSize: 5000
+        catchupBatchSize: 500
+        steadyBatchSize: 100
+```
+
+**Key Configuration Points:**
+
+- `timestampColumn` - The timestamp field used for incremental sync (must be monotonically increasing)
+- `columns` - Array of column names to fetch, or `['*']` for all columns
+- `targetTable` - Harper table where data will be synced
+- Each BigQuery table must sync to a **different** Harper table (see [Configuration](#configuration) for details)
+
+### 3. Run
+
+Start Harper with the plugin:
+
+```bash
+harper dev .
+```
+
+The plugin will:
+
+1. Discover cluster topology
+2. Calculate this node's partition assignments
+3. Begin syncing data from BigQuery
+4. Create checkpoints for recovery
+5. Continuously poll for new data
+
+Monitor sync status via the REST API:
+
+```bash
+curl http://localhost:9926/SyncControl
+```
 
 ## Architecture
 
-Each node:
+### How It Works
 
-1. Discovers cluster topology via Harper's clustering API
-2. Calculates its node ID from ordered peer list
-3. Pulls only records where `hash(timestamp) % clusterSize == nodeId`
-4. Writes to local Harper instance
-5. Relies on Harper's native replication
+Each Harper node in the cluster:
 
-## Installation
+1. **Discovers peers** via Harper's clustering API
+2. **Calculates node ID** from ordered peer list (stable across restarts)
+3. **Partitions workload** using modulo: pulls only records where `hash(timestamp) % clusterSize == nodeId`
+4. **Syncs independently** with local checkpoints
+5. **Relies on Harper replication** for data distribution across the cluster
 
-### Development
+**Key Benefits:**
 
-For local development and testing:
+- No coordination between nodes (no distributed locks, no leader election)
+- Linear scalability - add nodes to increase throughput proportionally
+- Independent failure recovery - nodes restart without affecting others
+- Deterministic partitioning - same timestamp always routes to same node
 
-1. Install Harper: [Quick start guide](https://docs.harperdb.io/docs/getting-started/quickstart)
-2. Clone this repository
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Configure `config.yaml` with your BigQuery credentials:
+### Adaptive Batch Sizing
 
-   ```yaml
-   bigquery:
-     projectId: your-project
-     credentials: /path/to/service-account-key.json
-     location: US
+The plugin automatically adjusts batch sizes based on sync lag:
 
-     tables:
-       - id: vessel_positions
-         dataset: your_dataset
-         table: your_table
-         timestampColumn: timestamp
-         columns: ['*']
-         targetTable: BigQueryData
-   ```
+- **Initial phase** (lag > 1 hour): Large batches for fast catch-up
+- **Catchup phase** (lag 10 min - 1 hour): Medium batches to close the gap
+- **Steady phase** (lag < 10 min): Small batches for low latency
 
-5. Run in development mode:
-   ```bash
-   harper dev .
-   ```
-
-This starts Harper in development mode with auto-reload, running the plugin locally.
-
-### Production
-
-Production deployment instructions coming soon. For now, use development mode for testing and validation.
+Poll intervals also adapt - faster during catch-up, slower when near real-time.
 
 ## Configuration
 
-### Multi-Table Support
+### Multi-Table Configuration
 
-The plugin supports syncing **multiple BigQuery tables** simultaneously, each with independent sync settings:
+Sync multiple BigQuery tables to Harper simultaneously:
 
 ```yaml
 bigquery:
@@ -198,41 +141,39 @@ bigquery:
   credentials: service-account-key.json
   location: US
 
+  # Optional retry configuration
+  maxRetries: 5
+  initialRetryDelay: 1000 # milliseconds
+
   tables:
-    - id: vessel_positions
-      dataset: maritime_tracking
-      table: vessel_positions
-      timestampColumn: timestamp
-      columns: [timestamp, mmsi, latitude, longitude, speed_knots]
-      targetTable: VesselPositions
+    - id: orders
+      dataset: ecommerce
+      table: orders
+      timestampColumn: created_at
+      columns: [created_at, order_id, customer_id, total, status]
+      targetTable: Orders
       sync:
         initialBatchSize: 10000
         catchupBatchSize: 1000
         steadyBatchSize: 500
+        pollInterval: 30000 # 30 seconds
 
-    - id: port_events
-      dataset: maritime_tracking
-      table: port_events
-      timestampColumn: event_time
-      columns: ['*'] # Fetch all columns
-      targetTable: PortEvents
+    - id: payments
+      dataset: ecommerce
+      table: payments
+      timestampColumn: payment_time
+      columns: ['*']
+      targetTable: Payments
       sync:
         initialBatchSize: 5000
         catchupBatchSize: 500
         steadyBatchSize: 100
+        pollInterval: 60000 # 60 seconds
 ```
 
-**Key Features:**
+**Important Constraints:**
 
-- Each table syncs to a separate Harper table
-- Independent batch sizes and sync rates per table
-- Different timestamp column names supported
-- Isolated checkpoints - one table failure doesn't affect others
-- Per-table validation and monitoring
-- Backward compatible with single-table configuration
-
-**Important Constraint:**
-Each BigQuery table MUST sync to a **different** Harper table. Multiple BigQuery tables syncing to the same Harper table is not supported and will cause:
+Each BigQuery table **MUST** sync to a different Harper table. Multiple BigQuery tables syncing to the same Harper table will cause:
 
 - Record ID collisions and data overwrites
 - Validation failures (can only validate one source)
@@ -241,157 +182,152 @@ Each BigQuery table MUST sync to a **different** Harper table. Multiple BigQuery
 
 If you need to combine data from multiple BigQuery tables, sync them to separate Harper tables and join at query time.
 
-See `config.multi-table.yaml` for a complete example.
+### Column Selection
+
+Reduce BigQuery costs by fetching only needed columns:
+
+```yaml
+tables:
+  - id: large_table
+    dataset: analytics
+    table: events
+    timestampColumn: event_time
+    # Only fetch these 5 columns instead of all 50+
+    columns: [event_time, user_id, event_type, page_url, session_id]
+    targetTable: Events
+```
+
+**Rules:**
+
+- `timestampColumn` MUST be included in the columns list
+- Use `['*']` to fetch all columns (default if omitted)
+- Column selection reduces network transfer and query costs
 
 ### Retry Configuration
 
-The plugin implements exponential backoff with jitter for transient BigQuery errors (rate limits, quota exceeded, temporary service unavailability):
+The plugin implements exponential backoff with jitter for transient BigQuery errors:
 
 ```yaml
 bigquery:
-  projectId: your-project
-  credentials: service-account-key.json
-  location: US
-
-  # Optional retry configuration (defaults shown)
-  maxRetries: 5 # Maximum number of retry attempts
-  initialRetryDelay: 1000 # Initial delay in milliseconds (doubles each retry)
-
-  tables:
-    - id: vessel_positions
-      # ... table configuration
+  maxRetries: 5 # Maximum retry attempts (default: 5)
+  initialRetryDelay: 1000 # Initial delay in ms, doubles each retry (default: 1000)
 ```
 
 **Retry Behavior:**
 
-- **Retryable errors**: Rate limits, quota exceeded, internal errors, service unavailable (503), too many requests (429)
-- **Non-retryable errors**: Invalid queries, permission errors, schema mismatches - fail immediately
+- **Retryable errors**: Rate limits, quota exceeded, internal errors, 503, 429
+- **Non-retryable errors**: Invalid queries, permissions, schema mismatches - fail immediately
 - **Backoff strategy**: Initial delay × 2^attempt with random jitter, capped at 30 seconds
-- **Logging**: Warnings on retry attempts, errors on final failure with detailed error information
+- **Logging**: Warnings on retry attempts, errors on final failure
 
-**Example backoff delays** (with jitter):
+### Legacy Single-Table Configuration
 
-- Attempt 1: 1000-2000ms
-- Attempt 2: 2000-4000ms
-- Attempt 3: 4000-8000ms
-- Attempt 4: 8000-16000ms
-- Attempt 5: 16000-30000ms (capped)
+For backward compatibility, the plugin still supports the single-table format:
 
-This prevents overwhelming BigQuery API during transient issues while quickly failing on permanent errors.
+```yaml
+bigquery:
+  projectId: your-project
+  dataset: your_dataset
+  table: your_table
+  timestampColumn: timestamp
+  credentials: service-account-key.json
+  location: US
+  columns: ['*']
+```
 
-### Data Storage
+This automatically converts to a multi-table configuration internally with `targetTable: BigQueryData`.
 
-BigQuery records are stored as-is at the top level:
+## Data Storage
+
+BigQuery records are stored as-is in Harper tables:
 
 ```graphql
-type BigQueryData @table {
-	id: ID! @primaryKey
-	# All BigQuery fields stored directly at top level
-	_syncedAt: String @createdTime
+type YourTable @table {
+	id: ID! @primaryKey # Generated from timestamp + hash
+	_syncedAt: String @createdTime # When record was synced
+	# All your BigQuery columns appear here at the top level
 }
 ```
 
-Example stored record:
+**Example stored record:**
 
 ```json
 {
 	"id": "a1b2c3d4e5f6g7h8",
-	"_syncedAt": "2025-11-04T16:00:00Z",
-	"timestamp": "2025-11-04T15:59:00Z",
-	"mmsi": "367123456",
-	"imo": "IMO9876543",
-	"vessel_name": "MARITIME VOYAGER",
-	"vessel_type": "Container Ship",
-	"latitude": 37.7749,
-	"longitude": -122.4194,
-	"speed_knots": 12.5,
-	"heading": 275,
-	"status": "Under way using engine"
+	"_syncedAt": "2025-12-15T20:00:00Z",
+	"event_time": "2025-12-15T19:59:00Z",
+	"user_id": "user_12345",
+	"event_type": "page_view",
+	"page_url": "/products/widget",
+	"session_id": "sess_abc123"
 }
 ```
 
-This provides maximum flexibility - all BigQuery fields are directly queryable without nested paths.
+All BigQuery fields are directly queryable without nested paths, providing maximum flexibility.
 
-### BigQuery Setup
+## Maritime Test Data (Optional)
 
-Ensure service account has:
+Want to test the plugin before connecting your own data? Use our maritime data synthesizer to generate realistic vessel tracking data.
 
-- `bigquery.jobs.create` permission
-- `bigquery.tables.getData` permission on target table
+The synthesizer creates production-like workloads with:
 
-[BigQuery IAM documentation](https://cloud.google.com/bigquery/docs/access-control)
+- 100,000+ vessels with realistic movement patterns
+- Multiple related tables (positions, events, metadata)
+- Global scale with 29 major ports worldwide
+- Physics-based navigation
+- Automatic retention management
 
-### Harper Setup
+**Quick Start:**
 
-For Harper installation and configuration, see the [Harper Getting Started Guide](https://docs.harperdb.io/docs/getting-started).
+```bash
+# Generate test data (writes TO BigQuery)
+npx maritime-data-synthesizer initialize realistic
 
-<!--
-Additional considerations for production deployments:
-- Fixed node IDs for clustering stability
-- Peer discovery configuration for multi-node setups
-- IOPS capacity planning for write throughput
--->
-
-### Batch Size Tuning
-
-Adjust based on:
-
-- Record size
-- Network bandwidth
-- IOPS capacity
-- Desired latency
-
-## Querying Data
-
-BigQuery fields are stored directly at the top level for easy querying:
-
-```javascript
-// Get all records
-SELECT * FROM BigQueryData LIMIT 10;
-
-// Query by vessel MMSI (direct field access)
-SELECT * FROM BigQueryData
-WHERE mmsi = '367123456';
-
-// Filter by timestamp
-SELECT * FROM BigQueryData
-WHERE timestamp > '2025-11-01T00:00:00Z'
-ORDER BY timestamp DESC;
-
-// Select specific fields - find fast-moving vessels
-SELECT id, timestamp, vessel_name, speed_knots, latitude, longitude
-FROM BigQueryData
-WHERE speed_knots > 20;
-
-// Check sync status
-SELECT id, _syncedAt, timestamp, vessel_name, mmsi
-FROM BigQueryData
-ORDER BY _syncedAt DESC
-LIMIT 10;
+# Start the plugin (reads FROM BigQuery)
+harper dev .
 ```
 
-## Monitoring
+**Documentation:**
+
+- [5-Minute Quick Start](docs/quickstart.md) - Start generating data immediately
+- [Maritime Synthesizer Guide](docs/maritime-synthesizer.md) - Comprehensive documentation
+- [System Overview](docs/system-overview.md) - How plugin + synthesizer work together
+- [Why Maritime Data?](README.md#why-maritime-data) - Rationale for vessel tracking data
+
+### Why Maritime Data?
+
+The maritime synthesizer provides a **realistic, production-grade test environment**. Vessel tracking data mirrors common BigQuery workloads:
+
+✅ **High volume continuous flow** - 144K+ records/day sustained
+✅ **Temporal ordering constraints** - Chronological data with late arrivals
+✅ **Complex schema** - Geospatial coords, metadata, multi-table relationships
+✅ **Production use case** - Matches IoT streams, event tracking, time-series data
+
+Perfect for testing sync performance, multi-table coordination, and distributed workload partitioning before production deployment.
+
+## Monitoring & Operations
 
 ### Check Sync Status
 
-```javascript
-// Query checkpoint table
+Query the REST API:
+
+```bash
+# Get current status
+curl http://localhost:9926/SyncControl
+
+# Control sync
+curl -X POST http://localhost:9926/SyncControl \
+  -H "Content-Type: application/json" \
+  -d '{"action": "start"}'  # or "stop"
+```
+
+### View Checkpoints
+
+```sql
+-- Check sync progress per node
 SELECT * FROM SyncCheckpoint ORDER BY nodeId;
-```
 
-### View Recent Audits
-
-```javascript
-// Check validation results
-SELECT * FROM SyncAudit
-WHERE timestamp > NOW() - INTERVAL '1 hour'
-ORDER BY timestamp DESC;
-```
-
-### Monitor Lag
-
-```javascript
-// Calculate current lag
+-- Calculate current lag
 SELECT
   nodeId,
   lastTimestamp,
@@ -400,47 +336,98 @@ SELECT
 FROM SyncCheckpoint;
 ```
 
-## API Endpoints
+### View Validation Results
 
-### Get Status
-
-```bash
-GET /SyncControl
+```sql
+-- Check recent audits
+SELECT * FROM SyncAudit
+WHERE timestamp > NOW() - INTERVAL '1 hour'
+ORDER BY timestamp DESC;
 ```
 
-Returns current sync status for the node.
+### Query Synced Data
 
-### Control Sync
+```sql
+-- Query your synced data
+SELECT * FROM UserEvents
+WHERE event_time > '2025-12-01T00:00:00Z'
+ORDER BY event_time DESC
+LIMIT 100;
 
-```bash
-POST /SyncControl
-{
-  "action": "start" | "stop"
-  # Note: "validate" action is not yet implemented
-}
+-- Check sync latency
+SELECT
+  id,
+  event_time as source_time,
+  _syncedAt as synced_time,
+  TIMESTAMPDIFF(SECOND, event_time, _syncedAt) as latency_seconds
+FROM UserEvents
+ORDER BY _syncedAt DESC
+LIMIT 10;
 ```
 
 ## Troubleshooting
 
 ### Node Not Ingesting
 
-- Check BigQuery credentials
-- Verify node can reach BigQuery API
-- Check checkpoint table for errors
+**Symptoms:** Node shows as running but no new records appear
 
-### Data Drift Detected
+**Checks:**
 
-- Check for partition key collisions
-- Verify all nodes are running
-- Review checkpoint timestamps across nodes
+1. Verify BigQuery credentials are valid
+2. Check network connectivity to BigQuery API
+3. Query checkpoint table for errors: `SELECT * FROM SyncCheckpoint WHERE nodeId = 'your-node'`
+4. Check logs for permission errors or API failures
 
 ### High Lag
 
-- Increase batch sizes
-- Add more nodes
-- Check IOPS capacity
+**Symptoms:** Sync lag increasing over time
 
-**Need help?** Visit [Harper documentation](https://docs.harperdb.io) or reach out to our team at [harperdb.io](https://harperdb.io)
+**Solutions:**
+
+1. **Increase batch sizes** in config for faster catch-up
+2. **Add more nodes** to the cluster for horizontal scaling
+3. **Check IOPS capacity** - ensure storage can handle write throughput
+4. **Reduce columns** - fetch only needed columns to reduce network transfer
+
+### Data Drift Detected
+
+**Symptoms:** Validation shows missing records
+
+**Causes:**
+
+1. Partition key collisions (rare, hash-based)
+2. Some nodes not running or stuck
+3. Checkpoint corruption
+
+**Resolution:**
+
+1. Check all nodes are running: `SELECT DISTINCT nodeId FROM SyncCheckpoint`
+2. Review checkpoint timestamps for anomalies
+3. Check validation logs for specific issues: `SELECT * FROM SyncAudit WHERE status = 'failed'`
+
+### BigQuery API Errors
+
+**Symptoms:** Repeated API failures in logs
+
+**Common Issues:**
+
+| Error                     | Cause                             | Solution                                                 |
+| ------------------------- | --------------------------------- | -------------------------------------------------------- |
+| `403 Permission Denied`   | Service account lacks permissions | Add `bigquery.jobs.create` and `bigquery.tables.getData` |
+| `429 Too Many Requests`   | Rate limit exceeded               | Reduce batch sizes or poll frequency                     |
+| `503 Service Unavailable` | Temporary BigQuery outage         | Plugin will automatically retry with backoff             |
+| `Invalid query`           | Schema mismatch                   | Verify `timestampColumn` exists and is correct type      |
+
+### Configuration Issues
+
+**Symptoms:** Plugin fails to start or sync doesn't begin
+
+**Common Mistakes:**
+
+1. **timestampColumn not in columns list** - Must include timestamp in columns array
+2. **Multiple tables → same targetTable** - Each BigQuery table needs unique Harper table
+3. **Invalid credentials path** - Ensure service account key file exists at specified path
+4. **Missing location** - Defaults to US, but must match your BigQuery dataset location
 
 ## Performance Tuning
 
@@ -457,99 +444,80 @@ Learn more about [Harper's storage architecture](https://docs.harperdb.io/docs/r
 
 ### Scaling Guidelines
 
-- 3 nodes: ~15K records/sec total
-- 6 nodes: ~30K records/sec total
-- 12 nodes: ~60K records/sec total
+- **3 nodes**: ~15K records/sec total
+- **6 nodes**: ~30K records/sec total
+- **12 nodes**: ~60K records/sec total
 
-**Note:** Harper doesn't autoscale. Nodes must be added/removed manually. Fabric makes this easier through its UI, but changing cluster size requires rebalancing consideration (see Limitations below).
+**Note:** Harper doesn't autoscale. Add/remove nodes manually via Fabric UI or self-hosted configuration. Cluster size changes require consideration (see Limitations).
+
+### Batch Size Recommendations
+
+Adjust based on your workload:
+
+| Record Size     | Network | Initial Batch | Catchup Batch | Steady Batch  |
+| --------------- | ------- | ------------- | ------------- | ------------- |
+| Small (<1KB)    | Fast    | 10000         | 1000          | 500           |
+| Medium (1-10KB) | Fast    | 5000          | 500           | 100           |
+| Large (>10KB)   | Fast    | 1000          | 100           | 50            |
+| Any             | Slow    | Reduce by 50% | Reduce by 50% | Reduce by 50% |
+
+## BigQuery Setup
+
+### Required Permissions
+
+Your service account needs:
+
+- `bigquery.jobs.create` - Create query jobs
+- `bigquery.tables.getData` - Read table data
+
+[BigQuery IAM documentation](https://cloud.google.com/bigquery/docs/access-control)
+
+### Cost Optimization
+
+1. **Column selection** - Fetch only needed columns to reduce query costs
+2. **Polling intervals** - Adjust `pollInterval` based on latency requirements
+3. **Batch sizes** - Larger batches = fewer queries = lower costs (but higher latency)
+4. **Partitioned tables** - Use timestamp partitioning in BigQuery for faster queries
 
 ## Limitations
 
-- Cluster size should remain stable (node additions require rebalancing)
-- BigQuery costs increase with query frequency
-- Modulo partitioning requires hashable timestamp
+- **Stable cluster topology** - Adding/removing nodes requires workload rebalancing (v3.0 will add dynamic rebalancing)
+- **Monotonic timestamps** - Timestamp column must be monotonically increasing for correct partitioning
+- **Schema evolution** - Adding columns works, but removing/renaming requires manual intervention
+- **One direction** - Plugin syncs FROM BigQuery TO Harper (not bidirectional)
 
 ## Roadmap
 
-### Crawl (v1.0 - Complete)
+See [ROADMAP.md](ROADMAP.md) for future plans.
 
-**Status:** ✅ Shipped
+### Next (v3.0)
 
-Single-threaded, single-table ingestion:
+- Multi-threaded ingestion per node
+- Dynamic rebalancing for autoscaling
+- Enhanced monitoring dashboards
+- Dynamic Harper table creation via Operations API
 
-- ✅ Modulo-based partitioning for distributed workload
-- ✅ Adaptive batch sizing (phase-based: initial/catchup/steady)
-- ✅ Checkpoint-based recovery per node
-- ✅ Durable thread identity (survives restarts)
-- ✅ Monitoring via REST API (`/SyncControl`)
+## Contributing
 
-### 🚶 Walk (v2.0 - Complete)
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-**Status:** ✅ Shipped
+**Areas we'd love help with:**
 
-Multi-table ingestion with column selection:
+- Production deployment documentation
+- Integration tests
+- Performance benchmarks
+- Video tutorials
+- More real-world configuration examples
 
-- ✅ **Multiple BigQuery tables** - Ingest from multiple tables simultaneously
-- ✅ **Column selection** - Choose specific columns per table (reduce data transfer)
-- ✅ **Per-table configuration** - Different batch sizes, intervals, and strategies per table
-- ✅ **Multi-table validation** - Independent validation per table
-- ✅ **Unified monitoring** - Single dashboard for all table ingestions
+## Support
 
-**Use Cases:**
+- **Issues**: [GitHub Issues](https://github.com/HarperFast/bigquery-sync/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/HarperFast/bigquery-sync/discussions)
+- **Email**: opensource@harperdb.io
 
-- Ingest multiple related datasets (e.g., vessels, ports, weather)
-- Reduce costs by selecting only needed columns
-- Different sync strategies per data type (real-time vs batch)
+## License
 
-**Configuration Example:**
-
-```yaml
-bigquery:
-  projectId: your-project
-  credentials: service-account-key.json
-  location: US
-
-  tables:
-    - id: vessel_positions
-      dataset: maritime_tracking
-      table: vessel_positions
-      columns: [mmsi, timestamp, latitude, longitude, speed_knots]
-      targetTable: VesselPositions
-      sync:
-        initialBatchSize: 10000
-        catchupBatchSize: 1000
-        steadyBatchSize: 500
-
-    - id: port_events
-      dataset: maritime_tracking
-      table: port_events
-      columns: [port_id, vessel_mmsi, event_type, timestamp]
-      targetTable: PortEvents
-      sync:
-        initialBatchSize: 5000
-        catchupBatchSize: 500
-        steadyBatchSize: 100
-```
-
-### 🏃 Run (v3.0 - Planned)
-
-**Status:** 📋 Future
-
-Multi-threaded, multi-instance Harper cluster support:
-
-- [ ] **Multi-threaded ingestion** - Multiple worker threads per node
-- [ ] **Full cluster distribution** - Automatic workload distribution across all Harper nodes
-- [ ] **Dynamic rebalancing** - Handle node additions/removals without manual intervention
-- [ ] **Improved monitoring** - Cluster-wide health dashboard
-- [ ] **Thread-level checkpointing** - Fine-grained recovery per worker thread
-
-**Benefits:**
-
-- Linear scaling across cluster nodes
-- Better resource utilization per node
-- Automatic failover and rebalancing
-
-**Note:** The code already supports multiple worker threads per instance via `server.workerIndex`. Each thread gets a durable identity (`hostname-workerIndex`) that persists across restarts, enabling checkpoint-based recovery.
+Apache 2.0 - See [LICENSE](LICENSE)
 
 ---
 
