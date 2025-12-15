@@ -63,7 +63,7 @@ bigquery:
       dataset: production
       table: application_logs
       timestampColumn: timestamp
-      columns: ['*']  # Fetch all columns
+      columns: ['*'] # Fetch all columns
       targetTable: AppLogs
       sync:
         initialBatchSize: 5000
@@ -87,6 +87,7 @@ harper dev .
 ```
 
 The plugin will:
+
 1. Discover cluster topology
 2. Calculate this node's partition assignments
 3. Begin syncing data from BigQuery
@@ -142,7 +143,7 @@ bigquery:
 
   # Optional retry configuration
   maxRetries: 5
-  initialRetryDelay: 1000  # milliseconds
+  initialRetryDelay: 1000 # milliseconds
 
   tables:
     - id: orders
@@ -155,7 +156,7 @@ bigquery:
         initialBatchSize: 10000
         catchupBatchSize: 1000
         steadyBatchSize: 500
-        pollInterval: 30000  # 30 seconds
+        pollInterval: 30000 # 30 seconds
 
     - id: payments
       dataset: ecommerce
@@ -167,12 +168,13 @@ bigquery:
         initialBatchSize: 5000
         catchupBatchSize: 500
         steadyBatchSize: 100
-        pollInterval: 60000  # 60 seconds
+        pollInterval: 60000 # 60 seconds
 ```
 
 **Important Constraints:**
 
 Each BigQuery table **MUST** sync to a different Harper table. Multiple BigQuery tables syncing to the same Harper table will cause:
+
 - Record ID collisions and data overwrites
 - Validation failures (can only validate one source)
 - Checkpoint confusion (different sync states)
@@ -196,6 +198,7 @@ tables:
 ```
 
 **Rules:**
+
 - `timestampColumn` MUST be included in the columns list
 - Use `['*']` to fetch all columns (default if omitted)
 - Column selection reduces network transfer and query costs
@@ -206,7 +209,7 @@ The plugin implements exponential backoff with jitter for transient BigQuery err
 
 ```yaml
 bigquery:
-  maxRetries: 5           # Maximum retry attempts (default: 5)
+  maxRetries: 5 # Maximum retry attempts (default: 5)
   initialRetryDelay: 1000 # Initial delay in ms, doubles each retry (default: 1000)
 ```
 
@@ -240,9 +243,9 @@ BigQuery records are stored as-is in Harper tables:
 
 ```graphql
 type YourTable @table {
-  id: ID! @primaryKey           # Generated from timestamp + hash
-  _syncedAt: String @createdTime # When record was synced
-  # All your BigQuery columns appear here at the top level
+	id: ID! @primaryKey # Generated from timestamp + hash
+	_syncedAt: String @createdTime # When record was synced
+	# All your BigQuery columns appear here at the top level
 }
 ```
 
@@ -250,13 +253,13 @@ type YourTable @table {
 
 ```json
 {
-  "id": "a1b2c3d4e5f6g7h8",
-  "_syncedAt": "2025-12-15T20:00:00Z",
-  "event_time": "2025-12-15T19:59:00Z",
-  "user_id": "user_12345",
-  "event_type": "page_view",
-  "page_url": "/products/widget",
-  "session_id": "sess_abc123"
+	"id": "a1b2c3d4e5f6g7h8",
+	"_syncedAt": "2025-12-15T20:00:00Z",
+	"event_time": "2025-12-15T19:59:00Z",
+	"user_id": "user_12345",
+	"event_type": "page_view",
+	"page_url": "/products/widget",
+	"session_id": "sess_abc123"
 }
 ```
 
@@ -267,6 +270,7 @@ All BigQuery fields are directly queryable without nested paths, providing maxim
 Want to test the plugin before connecting your own data? Use our maritime data synthesizer to generate realistic vessel tracking data.
 
 The synthesizer creates production-like workloads with:
+
 - 100,000+ vessels with realistic movement patterns
 - Multiple related tables (positions, events, metadata)
 - Global scale with 29 major ports worldwide
@@ -368,6 +372,7 @@ LIMIT 10;
 **Symptoms:** Node shows as running but no new records appear
 
 **Checks:**
+
 1. Verify BigQuery credentials are valid
 2. Check network connectivity to BigQuery API
 3. Query checkpoint table for errors: `SELECT * FROM SyncCheckpoint WHERE nodeId = 'your-node'`
@@ -378,6 +383,7 @@ LIMIT 10;
 **Symptoms:** Sync lag increasing over time
 
 **Solutions:**
+
 1. **Increase batch sizes** in config for faster catch-up
 2. **Add more nodes** to the cluster for horizontal scaling
 3. **Check IOPS capacity** - ensure storage can handle write throughput
@@ -388,11 +394,13 @@ LIMIT 10;
 **Symptoms:** Validation shows missing records
 
 **Causes:**
+
 1. Partition key collisions (rare, hash-based)
 2. Some nodes not running or stuck
 3. Checkpoint corruption
 
 **Resolution:**
+
 1. Check all nodes are running: `SELECT DISTINCT nodeId FROM SyncCheckpoint`
 2. Review checkpoint timestamps for anomalies
 3. Check validation logs for specific issues: `SELECT * FROM SyncAudit WHERE status = 'failed'`
@@ -403,18 +411,19 @@ LIMIT 10;
 
 **Common Issues:**
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `403 Permission Denied` | Service account lacks permissions | Add `bigquery.jobs.create` and `bigquery.tables.getData` |
-| `429 Too Many Requests` | Rate limit exceeded | Reduce batch sizes or poll frequency |
-| `503 Service Unavailable` | Temporary BigQuery outage | Plugin will automatically retry with backoff |
-| `Invalid query` | Schema mismatch | Verify `timestampColumn` exists and is correct type |
+| Error                     | Cause                             | Solution                                                 |
+| ------------------------- | --------------------------------- | -------------------------------------------------------- |
+| `403 Permission Denied`   | Service account lacks permissions | Add `bigquery.jobs.create` and `bigquery.tables.getData` |
+| `429 Too Many Requests`   | Rate limit exceeded               | Reduce batch sizes or poll frequency                     |
+| `503 Service Unavailable` | Temporary BigQuery outage         | Plugin will automatically retry with backoff             |
+| `Invalid query`           | Schema mismatch                   | Verify `timestampColumn` exists and is correct type      |
 
 ### Configuration Issues
 
 **Symptoms:** Plugin fails to start or sync doesn't begin
 
 **Common Mistakes:**
+
 1. **timestampColumn not in columns list** - Must include timestamp in columns array
 2. **Multiple tables → same targetTable** - Each BigQuery table needs unique Harper table
 3. **Invalid credentials path** - Ensure service account key file exists at specified path
@@ -445,12 +454,12 @@ Learn more about [Harper's storage architecture](https://docs.harperdb.io/docs/r
 
 Adjust based on your workload:
 
-| Record Size | Network | Initial Batch | Catchup Batch | Steady Batch |
-|-------------|---------|---------------|---------------|--------------|
-| Small (<1KB) | Fast | 10000 | 1000 | 500 |
-| Medium (1-10KB) | Fast | 5000 | 500 | 100 |
-| Large (>10KB) | Fast | 1000 | 100 | 50 |
-| Any | Slow | Reduce by 50% | Reduce by 50% | Reduce by 50% |
+| Record Size     | Network | Initial Batch | Catchup Batch | Steady Batch  |
+| --------------- | ------- | ------------- | ------------- | ------------- |
+| Small (<1KB)    | Fast    | 10000         | 1000          | 500           |
+| Medium (1-10KB) | Fast    | 5000          | 500           | 100           |
+| Large (>10KB)   | Fast    | 1000          | 100           | 50            |
+| Any             | Slow    | Reduce by 50% | Reduce by 50% | Reduce by 50% |
 
 ## BigQuery Setup
 
@@ -493,6 +502,7 @@ See [ROADMAP.md](ROADMAP.md) for future plans.
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Areas we'd love help with:**
+
 - Production deployment documentation
 - Integration tests
 - Performance benchmarks

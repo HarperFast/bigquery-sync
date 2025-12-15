@@ -7,6 +7,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 ## What's Shipped (v2.0) ✅
 
 ### Core Plugin Features
+
 - ✅ **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
 - ✅ **Column selection** - Reduce costs by fetching only needed columns from BigQuery
 - ✅ **Per-table configuration** - Independent batch sizes, sync intervals, and strategies per table
@@ -17,12 +18,14 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 - ✅ **Backward compatibility** - Single-table format still supported
 
 ### Distributed Architecture
+
 - ✅ **Modulo-based partitioning** - Deterministic distributed workload assignment
 - ✅ **Adaptive batch sizing** - Phase-based adjustment (initial/catchup/steady)
 - ✅ **Checkpoint-based recovery** - Independent per-node failure recovery
 - ✅ **Horizontal scalability** - Linear throughput increase with cluster size
 
 ### Maritime Data Synthesizer
+
 - ✅ **Multi-table orchestrator** - Generate realistic data for multiple related tables ([#6](https://github.com/HarperFast/harper-bigquery-sync/issues/6))
 - ✅ **Rolling window mode** - Automatic data window maintenance and backfill
 - ✅ **100K+ vessel simulation** - Realistic maritime tracking data at global scale
@@ -30,6 +33,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 - ✅ **Automatic retention** - Configurable rolling window with cleanup
 
 ### Project Quality
+
 - ✅ **Memory leak fixes** - Journey tracking system optimized ([#5](https://github.com/HarperFast/harper-bigquery-sync/issues/5))
 - ✅ **CI/CD pipeline** - Automated lint, test, and format checks
 - ✅ **Comprehensive documentation** - User guides, API docs, design documents
@@ -39,6 +43,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 ## What's Next (v3.0 Vision)
 
 ### Multi-Threaded Ingestion
+
 - [ ] **Multi-threaded ingestion per node** ([#9](https://github.com/HarperFast/harper-bigquery-sync/issues/9))
   - Better CPU utilization on multi-core nodes
   - Code already supports durable thread identity via `hostname-workerIndex`
@@ -46,6 +51,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
   - Automatic thread scaling based on lag
 
 ### Dynamic Rebalancing
+
 - [ ] **Dynamic rebalancing for autoscaling** ([#10](https://github.com/HarperFast/harper-bigquery-sync/issues/10))
   - Detect topology changes → pause → recalculate → resume
   - Graceful node additions/removals without manual intervention
@@ -53,6 +59,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
   - Currently requires stable cluster topology
 
 ### Enhanced Monitoring
+
 - [ ] **Cluster-wide health dashboard**
   - Per-table metrics and thread-level statistics
   - Lag histograms and performance profiles
@@ -61,6 +68,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
   - Alert configurations
 
 ### Dynamic Schema Management
+
 - [ ] **Dynamic Harper table creation via Operations API** ([#7](https://github.com/HarperFast/harper-bigquery-sync/issues/7))
   - Currently requires manual schema.graphql definition
   - Could dynamically create tables based on BigQuery schema at runtime
@@ -73,6 +81,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 These are potential enhancements without specific commitments:
 
 ### Production Operations
+
 - [ ] **Production deployment documentation** ([#4](https://github.com/HarperFast/harper-bigquery-sync/issues/4))
   - Fabric deployment guide with one-click setup
   - Self-hosted installation for on-premise clusters
@@ -80,6 +89,7 @@ These are potential enhancements without specific commitments:
   - Operational runbooks for common scenarios
 
 ### Testing & Quality
+
 - [ ] **Comprehensive unit tests**
   - Core sync engine logic
   - Type conversion edge cases
@@ -96,6 +106,7 @@ These are potential enhancements without specific commitments:
   - Resource usage baselines
 
 ### Documentation
+
 - [ ] **Video tutorials**
   - Setup walkthrough
   - Configuration examples
@@ -112,6 +123,7 @@ These are potential enhancements without specific commitments:
   - Integration examples
 
 ### Developer Experience
+
 - [ ] **Better CLI output**
   - Colorized status messages
   - Progress indicators
