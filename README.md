@@ -315,11 +315,41 @@ Query the REST API:
 # Get current status
 curl http://localhost:9926/SyncControl
 
-# Control sync
+# Control sync (cluster-wide)
 curl -X POST http://localhost:9926/SyncControl \
   -H "Content-Type: application/json" \
-  -d '{"action": "start"}'  # or "stop"
+  -d '{"action": "start"}'  # or "stop" or "validate"
 ```
+
+**Status Response Format:**
+
+```json
+{
+  "global": {
+    "command": "start",
+    "commandedAt": "2025-12-16T20:30:00Z",
+    "commandedBy": "node1-0",
+    "version": 42
+  },
+  "worker": {
+    "nodeId": "node1-0",
+    "running": true,
+    "tables": [
+      { "tableId": "vessel_positions", "running": true, "phase": "steady" },
+      { "tableId": "port_events", "running": true, "phase": "catchup" }
+    ],
+    "failedEngines": []
+  },
+  "uptime": 3600,
+  "version": "2.0.0"
+}
+```
+
+- **global**: Cluster-wide sync command state (replicated across all nodes)
+- **worker**: This specific worker thread's status
+- **nodeId**: Identifies worker as `hostname-workerIndex`
+- **tables**: Status per sync engine (one per table)
+- **failedEngines**: Any engines that failed to start
 
 ### View Checkpoints
 
