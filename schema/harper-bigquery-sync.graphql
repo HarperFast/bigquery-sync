@@ -43,6 +43,16 @@ type SyncAudit @table {
 	recordSample: String
 }
 
+# Cluster-wide sync control state
+# Single record coordinates all workers across all nodes
+type SyncControlState @table {
+	id: String! @primaryKey # Always "sync-control" (singleton)
+	command: String! # "start" | "stop" | "validate"
+	commandedAt: Date! @indexed # When command was issued
+	commandedBy: String # Node that issued (hostname-workerIndex)
+	version: Int! # Monotonically increasing for ordering
+}
+
 # Schema lock table for distributed schema checking
 # Ensures only one node checks schemas at a time
 type SchemaLock @table {
