@@ -57,8 +57,28 @@ export class SyncControlManager {
 	}
 
 	async startSubscriptionLoop() {
-		logger.info('[SyncControlManager.startSubscriptionLoop] Starting loop');
-		// TODO: Implement subscription loop
+		logger.info('[SyncControlManager.startSubscriptionLoop] Starting subscription loop');
+
+		try {
+			for await (const update of this.subscription) {
+				logger.info(
+					`[SyncControlManager.startSubscriptionLoop] Received update: ${update.command} (v${update.version})`
+				);
+
+				// Only process if version is newer
+				if (update.version > this.lastProcessedVersion) {
+					await this.processCommand(update);
+					this.lastProcessedVersion = update.version;
+				} else {
+					logger.debug(
+						`[SyncControlManager.startSubscriptionLoop] Skipping old version ${update.version} (last: ${this.lastProcessedVersion})`
+					);
+				}
+			}
+		} catch (error) {
+			logger.error('[SyncControlManager.startSubscriptionLoop] Subscription failed, restarting in 5s:', error);
+			setTimeout(() => this.initialize(), 5000);
+		}
 	}
 
 	getStatus() {
