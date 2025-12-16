@@ -6,6 +6,7 @@ import { getPluginConfig, getTableConfig } from './config-loader.js';
 import { ValidationService } from './validation.js';
 import { SchemaManager } from './schema-manager.js';
 import { BigQueryClient } from './bigquery-client.js';
+import { SyncControlManager } from './sync-control-manager.js';
 
 export async function handleApplication(scope) {
 	const logger = scope.logger;
@@ -107,6 +108,12 @@ export async function handleApplication(scope) {
 
 	// Store all sync engines in globals
 	globals.set('syncEngines', syncEngines);
+
+	// Initialize SyncControlManager (controls all engines cluster-wide)
+	const controlManager = new SyncControlManager(syncEngines);
+	await controlManager.initialize();
+	globals.set('controlManager', controlManager);
+	logger.info(`[handleApplication] SyncControlManager initialized for ${syncEngines.length} engines`);
 
 	// For backward compatibility, also store the first engine as 'syncEngine'
 	if (syncEngines.length > 0) {
