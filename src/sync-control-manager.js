@@ -85,6 +85,52 @@ export class SyncControlManager {
 		}
 	}
 
+	async startAllEngines() {
+		logger.info(`[SyncControlManager.startAllEngines] Starting ${this.syncEngines.length} engines`);
+
+		const results = await Promise.allSettled(this.syncEngines.map((engine) => engine.start()));
+
+		// Track failures for status reporting
+		this.failedEngines = results
+			.map((result, i) => ({ engine: this.syncEngines[i], result }))
+			.filter(({ result }) => result.status === 'rejected')
+			.map(({ engine, result }) => ({
+				tableId: engine.tableId,
+				error: result.reason.message,
+			}));
+
+		if (this.failedEngines.length > 0) {
+			logger.error(
+				`[SyncControlManager.startAllEngines] ${this.failedEngines.length} engines failed to start:`,
+				this.failedEngines
+			);
+		}
+
+		const successCount = this.syncEngines.length - this.failedEngines.length;
+		logger.info(`[SyncControlManager.startAllEngines] Started ${successCount}/${this.syncEngines.length} engines`);
+	}
+
+	async stopAllEngines() {
+		logger.info(`[SyncControlManager.stopAllEngines] Stopping ${this.syncEngines.length} engines`);
+
+		await Promise.allSettled(this.syncEngines.map((engine) => engine.stop()));
+
+		this.failedEngines = []; // Clear failures on stop
+		logger.info('[SyncControlManager.stopAllEngines] All engines stopped');
+	}
+
+	async runValidation() {
+		logger.info('[SyncControlManager.runValidation] Running validation');
+		const validator = globals.get('validator');
+
+		if (validator) {
+			await validator.runValidation();
+			logger.info('[SyncControlManager.runValidation] Validation completed');
+		} else {
+			logger.warn('[SyncControlManager.runValidation] Validator not available');
+		}
+	}
+
 	async startSubscriptionLoop() {
 		logger.info('[SyncControlManager.startSubscriptionLoop] Starting subscription loop');
 
