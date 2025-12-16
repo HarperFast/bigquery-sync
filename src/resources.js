@@ -7,7 +7,7 @@
 // File: resources.js
 // Component entry point with resource definitions
 
-/* global tables, Resource */
+/* global tables, Resource, server, logger */
 import { globals } from './globals.js';
 
 // Main data table resource
@@ -104,37 +104,56 @@ export class SyncAudit extends tables.SyncAudit {
 export class SyncControl extends Resource {
 	async get() {
 		logger.debug('[SyncControl.get] Status request received');
-		const status = await globals.get('syncEngine').getStatus();
+
+		const STATE_ID = 'sync-control';
+		const globalState = await tables.SyncControlState.get(STATE_ID);
+		const controlManager = globals.get('controlManager');
+		const workerStatus = controlManager.getStatus();
+
 		const response = {
-			status,
+			global: globalState || { command: 'unknown', version: 0 },
+			worker: {
+				nodeId: `${server.hostname}-${server.workerIndex}`,
+				running: workerStatus.currentState === 'start',
+				tables: workerStatus.engines,
+				failedEngines: workerStatus.failedEngines,
+			},
 			uptime: process.uptime(),
-			version: '1.0.0',
+			version: '2.0.0',
 		};
-		logger.info(`[SyncControl.get] Returning status - running: ${status.running}, phase: ${status.phase}`);
+
+		logger.info(`[SyncControl.get] Status: ${globalState?.command} (v${globalState?.version})`);
 		return response;
 	}
 
 	async post({ action }) {
 		logger.info(`[SyncControl.post] Control action received: ${action}`);
-		switch (action) {
-			case 'start':
-				logger.info('[SyncControl.post] Starting sync engine');
-				await globals.get('syncEngine').start();
-				logger.info('[SyncControl.post] Sync engine started successfully');
-				return { message: 'Sync started' };
-			case 'stop':
-				logger.info('[SyncControl.post] Stopping sync engine');
-				await globals.get('syncEngine').stop();
-				logger.info('[SyncControl.post] Sync engine stopped successfully');
-				return { message: 'Sync stopped' };
-			case 'validate':
-				logger.info('[SyncControl.post] Triggering validation');
-				await globals.get('validator').runValidation();
-				logger.info('[SyncControl.post] Validation completed');
-				return { message: 'Validation triggered' };
-			default:
-				logger.warn(`[SyncControl.post] Unknown action requested: ${action}`);
-				throw new Error(`Unknown action: ${action}`);
+
+		const STATE_ID = 'sync-control';
+
+		// Validate action
+		if (!['start', 'stop', 'validate'].includes(action)) {
+			throw new Error(`Unknown action: ${action}`);
 		}
+
+		// Get current version
+		const current = await tables.SyncControlState.get(STATE_ID);
+		const nextVersion = (current?.version || 0) + 1;
+
+		// Update state table (triggers all subscriptions cluster-wide)
+		await tables.SyncControlState.put({
+			id: STATE_ID,
+			command: action,
+			commandedAt: new Date(),
+			commandedBy: `${server.hostname}-${server.workerIndex}`,
+			version: nextVersion,
+		});
+
+		logger.info(`[SyncControl.post] Command '${action}' issued (v${nextVersion})`);
+
+		return {
+			message: `${action} command issued to cluster`,
+			version: nextVersion,
+		};
 	}
 }
