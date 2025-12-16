@@ -3,7 +3,7 @@
 // Manages cluster-wide sync control via replicated state table
 // ============================================================================
 
-/* global logger */
+/* global logger, globals, tables */
 
 export class SyncControlManager {
 	constructor(syncEngines) {
@@ -96,7 +96,7 @@ export class SyncControlManager {
 			.filter(({ result }) => result.status === 'rejected')
 			.map(({ engine, result }) => ({
 				tableId: engine.tableId,
-				error: result.reason.message,
+				error: result.reason?.message || String(result.reason),
 			}));
 
 		if (this.failedEngines.length > 0) {
