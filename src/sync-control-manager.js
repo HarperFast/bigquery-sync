@@ -52,8 +52,37 @@ export class SyncControlManager {
 	}
 
 	async processCommand(state) {
-		logger.info(`[SyncControlManager.processCommand] Command: ${state.command} (v${state.version})`);
-		// TODO: Implement command processing
+		if (this.isProcessing) {
+			logger.debug('[SyncControlManager.processCommand] Already processing, skipping');
+			return;
+		}
+
+		this.isProcessing = true;
+
+		try {
+			logger.info(`[SyncControlManager.processCommand] Processing command: ${state.command}`);
+
+			switch (state.command) {
+				case 'start':
+					await this.startAllEngines();
+					break;
+				case 'stop':
+					await this.stopAllEngines();
+					break;
+				case 'validate':
+					await this.runValidation();
+					break;
+				default:
+					logger.warn(`[SyncControlManager.processCommand] Unknown command: ${state.command}`);
+			}
+
+			this.currentState = state.command;
+			logger.info(`[SyncControlManager.processCommand] Command completed: ${state.command}`);
+		} catch (error) {
+			logger.error('[SyncControlManager.processCommand] Error processing command:', error);
+		} finally {
+			this.isProcessing = false;
+		}
 	}
 
 	async startSubscriptionLoop() {
