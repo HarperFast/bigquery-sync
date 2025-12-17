@@ -12,6 +12,13 @@ import { validateFullConfig as _validateFullConfig, validateAndNormalizeColumns 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Safe logger wrapper for CLI compatibility
+const log = {
+	debug: (msg) => typeof logger !== 'undefined' && logger.debug(msg),
+	info: (msg) => typeof logger !== 'undefined' && logger.info(msg),
+	error: (msg) => typeof logger !== 'undefined' && logger.error(msg),
+};
+
 /**
  * Load configuration from config.yaml or accept a config object
  * @param {string|Object|null} configPath - Path to config file or config object or options object
@@ -27,19 +34,19 @@ export function loadConfig(configPath = null) {
 		if (configPath === null || configPath === undefined) {
 			// Default to config.yaml in project root
 			const path = join(__dirname, '..', 'config.yaml');
-			logger.debug(`[ConfigLoader.loadConfig] Loading config from default path: ${path}`);
+			log.debug(`[ConfigLoader.loadConfig] Loading config from default path: ${path}`);
 			const fileContent = readFileSync(path, 'utf8');
 			config = parse(fileContent);
 			source = path;
 		} else if (typeof configPath === 'string') {
 			// Path to config file
-			logger.debug(`[ConfigLoader.loadConfig] Loading config from: ${configPath}`);
+			log.debug(`[ConfigLoader.loadConfig] Loading config from: ${configPath}`);
 			const fileContent = readFileSync(configPath, 'utf8');
 			config = parse(fileContent);
 			source = configPath;
 		} else if (typeof configPath === 'object') {
 			// Config object passed directly (for testing)
-			logger.debug('[ConfigLoader.loadConfig] Using config object passed directly');
+			log.debug('[ConfigLoader.loadConfig] Using config object passed directly');
 			// Check if it's an options object with 'config' property
 			if (configPath.config) {
 				config = configPath.config;
@@ -52,16 +59,16 @@ export function loadConfig(configPath = null) {
 		}
 
 		if (!config) {
-			logger.error('[ConfigLoader.loadConfig] Failed to parse configuration');
+			log.error('[ConfigLoader.loadConfig] Failed to parse configuration');
 			throw new Error('Failed to parse configuration');
 		}
 
-		logger.info(`[ConfigLoader.loadConfig] Successfully loaded config from: ${source}`);
+		log.info(`[ConfigLoader.loadConfig] Successfully loaded config from: ${source}`);
 
 		// Normalize to multi-table format if needed
 		return normalizeConfig(config);
 	} catch (error) {
-		logger.error(`[ConfigLoader.loadConfig] Configuration loading failed: ${error.message}`);
+		log.error(`[ConfigLoader.loadConfig] Configuration loading failed: ${error.message}`);
 		throw new Error(`Failed to load configuration: ${error.message}`);
 	}
 }
@@ -75,13 +82,13 @@ export function loadConfig(configPath = null) {
  */
 function normalizeConfig(config) {
 	if (!config.bigquery) {
-		logger.error('[ConfigLoader.normalizeConfig] bigquery section missing in configuration');
+		log.error('[ConfigLoader.normalizeConfig] bigquery section missing in configuration');
 		throw new Error('bigquery section missing in configuration');
 	}
 
 	// Check if already in multi-table format
 	if (config.bigquery.tables && Array.isArray(config.bigquery.tables)) {
-		logger.info(
+		log.info(
 			`[ConfigLoader.normalizeConfig] Config already in multi-table format with ${config.bigquery.tables.length} tables`
 		);
 		// Validate multi-table configuration
@@ -90,7 +97,7 @@ function normalizeConfig(config) {
 	}
 
 	// Legacy single-table format - wrap in tables array
-	logger.info('[ConfigLoader.normalizeConfig] Converting legacy single-table config to multi-table format');
+	log.info('[ConfigLoader.normalizeConfig] Converting legacy single-table config to multi-table format');
 	const legacyBigQueryConfig = config.bigquery;
 
 	// Extract table-specific config
@@ -108,7 +115,7 @@ function normalizeConfig(config) {
 		},
 	};
 
-	logger.debug(
+	log.debug(
 		`[ConfigLoader.normalizeConfig] Created table config: ${tableConfig.dataset}.${tableConfig.table} -> ${tableConfig.targetTable}`
 	);
 
@@ -128,7 +135,7 @@ function normalizeConfig(config) {
 		},
 	};
 
-	logger.info('[ConfigLoader.normalizeConfig] Successfully normalized config to multi-table format');
+	log.info('[ConfigLoader.normalizeConfig] Successfully normalized config to multi-table format');
 	return normalizedConfig;
 }
 
@@ -139,15 +146,15 @@ function normalizeConfig(config) {
  * @private
  */
 function validateMultiTableConfig(config) {
-	logger.debug('[ConfigLoader.validateMultiTableConfig] Validating multi-table configuration');
+	log.debug('[ConfigLoader.validateMultiTableConfig] Validating multi-table configuration');
 
 	if (!config.bigquery.tables || !Array.isArray(config.bigquery.tables)) {
-		logger.error('[ConfigLoader.validateMultiTableConfig] bigquery.tables must be an array');
+		log.error('[ConfigLoader.validateMultiTableConfig] bigquery.tables must be an array');
 		throw new Error('bigquery.tables must be an array');
 	}
 
 	if (config.bigquery.tables.length === 0) {
-		logger.error('[ConfigLoader.validateMultiTableConfig] bigquery.tables array cannot be empty');
+		log.error('[ConfigLoader.validateMultiTableConfig] bigquery.tables array cannot be empty');
 		throw new Error('bigquery.tables array cannot be empty');
 	}
 
@@ -157,36 +164,36 @@ function validateMultiTableConfig(config) {
 	for (const table of config.bigquery.tables) {
 		// Check required fields
 		if (!table.id) {
-			logger.error('[ConfigLoader.validateMultiTableConfig] Missing required field: table.id');
+			log.error('[ConfigLoader.validateMultiTableConfig] Missing required field: table.id');
 			throw new Error('Missing required field: table.id');
 		}
 		if (!table.dataset) {
-			logger.error(`[ConfigLoader.validateMultiTableConfig] Missing 'dataset' for table: ${table.id}`);
+			log.error(`[ConfigLoader.validateMultiTableConfig] Missing 'dataset' for table: ${table.id}`);
 			throw new Error(`Missing required field 'dataset' for table: ${table.id}`);
 		}
 		if (!table.table) {
-			logger.error(`[ConfigLoader.validateMultiTableConfig] Missing 'table' for table: ${table.id}`);
+			log.error(`[ConfigLoader.validateMultiTableConfig] Missing 'table' for table: ${table.id}`);
 			throw new Error(`Missing required field 'table' for table: ${table.id}`);
 		}
 		if (!table.timestampColumn) {
-			logger.error(`[ConfigLoader.validateMultiTableConfig] Missing 'timestampColumn' for table: ${table.id}`);
+			log.error(`[ConfigLoader.validateMultiTableConfig] Missing 'timestampColumn' for table: ${table.id}`);
 			throw new Error(`Missing required field 'timestampColumn' for table: ${table.id}`);
 		}
 		if (!table.targetTable) {
-			logger.error(`[ConfigLoader.validateMultiTableConfig] Missing 'targetTable' for table: ${table.id}`);
+			log.error(`[ConfigLoader.validateMultiTableConfig] Missing 'targetTable' for table: ${table.id}`);
 			throw new Error(`Missing required field 'targetTable' for table: ${table.id}`);
 		}
 
 		// Check for duplicate IDs
 		if (tableIds.has(table.id)) {
-			logger.error(`[ConfigLoader.validateMultiTableConfig] Duplicate table ID: ${table.id}`);
+			log.error(`[ConfigLoader.validateMultiTableConfig] Duplicate table ID: ${table.id}`);
 			throw new Error(`Duplicate table ID: ${table.id}`);
 		}
 		tableIds.add(table.id);
 
 		// Check for duplicate target Harper tables
 		if (targetTables.has(table.targetTable)) {
-			logger.error(
+			log.error(
 				`[ConfigLoader.validateMultiTableConfig] Duplicate targetTable '${table.targetTable}' for: ${table.id}`
 			);
 			throw new Error(
@@ -199,12 +206,12 @@ function validateMultiTableConfig(config) {
 		}
 		targetTables.add(table.targetTable);
 
-		logger.debug(
+		log.debug(
 			`[ConfigLoader.validateMultiTableConfig] Validated table: ${table.id} (${table.dataset}.${table.table} -> ${table.targetTable})`
 		);
 	}
 
-	logger.info(
+	log.info(
 		`[ConfigLoader.validateMultiTableConfig] Successfully validated ${config.bigquery.tables.length} table configurations`
 	);
 }
