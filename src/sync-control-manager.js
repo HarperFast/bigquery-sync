@@ -3,7 +3,8 @@
 // Manages cluster-wide sync control via replicated state table
 // ============================================================================
 
-/* global logger, globals, tables */
+/* global logger, tables */
+import { globals } from './globals.js';
 
 export class SyncControlManager {
 	constructor(syncEngines) {
