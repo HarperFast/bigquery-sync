@@ -11,9 +11,9 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 - ✅ **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
 - ✅ **Column selection** - Reduce costs by fetching only needed columns from BigQuery
 - ✅ **Per-table configuration** - Independent batch sizes, sync intervals, and strategies per table
-- ✅ **Exponential backoff retry logic** - Smart retry with jitter for transient BigQuery errors ([#3](https://github.com/HarperFast/harper-bigquery-sync/issues/3))
-- ✅ **Comprehensive logging** - Structured logging throughout codebase for Grafana observability ([#11](https://github.com/HarperFast/harper-bigquery-sync/issues/11))
-- ✅ **Optional streaming insert API** - Configurable streaming inserts for production deployments ([#8](https://github.com/HarperFast/harper-bigquery-sync/issues/8))
+- ✅ **Exponential backoff retry logic** - Smart retry with jitter for transient BigQuery errors ([#3](https://github.com/HarperFast/bigquery-ingestor/issues/3))
+- ✅ **Comprehensive logging** - Structured logging throughout codebase for Grafana observability ([#11](https://github.com/HarperFast/bigquery-ingestor/issues/11))
+- ✅ **Optional streaming insert API** - Configurable streaming inserts for production deployments ([#8](https://github.com/HarperFast/bigquery-ingestor/issues/8))
 - ✅ **Multi-table validation** - Independent validation and monitoring per table
 - ✅ **Backward compatibility** - Single-table format still supported
 
@@ -26,7 +26,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 
 ### Maritime Data Synthesizer
 
-- ✅ **Multi-table orchestrator** - Generate realistic data for multiple related tables ([#6](https://github.com/HarperFast/harper-bigquery-sync/issues/6))
+- ✅ **Multi-table orchestrator** - Generate realistic data for multiple related tables ([#6](https://github.com/HarperFast/bigquery-ingestor/issues/6))
 - ✅ **Rolling window mode** - Automatic data window maintenance and backfill
 - ✅ **100K+ vessel simulation** - Realistic maritime tracking data at global scale
 - ✅ **Physics-based movement** - Realistic navigation patterns
@@ -34,7 +34,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 
 ### Project Quality
 
-- ✅ **Memory leak fixes** - Journey tracking system optimized ([#5](https://github.com/HarperFast/harper-bigquery-sync/issues/5))
+- ✅ **Memory leak fixes** - Journey tracking system optimized ([#5](https://github.com/HarperFast/bigquery-ingestor/issues/5))
 - ✅ **CI/CD pipeline** - Automated lint, test, and format checks
 - ✅ **Comprehensive documentation** - User guides, API docs, design documents
 - ✅ **Project history** - Development milestones and evolution tracking
@@ -44,7 +44,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 
 ### Multi-Threaded Ingestion
 
-- [ ] **Multi-threaded ingestion per node** ([#9](https://github.com/HarperFast/harper-bigquery-sync/issues/9))
+- [ ] **Multi-threaded ingestion per node** ([#9](https://github.com/HarperFast/bigquery-ingestor/issues/9))
   - Better CPU utilization on multi-core nodes
   - Code already supports durable thread identity via `hostname-workerIndex`
   - Thread-level checkpointing for fine-grained recovery
@@ -52,7 +52,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 
 ### Dynamic Rebalancing
 
-- [ ] **Dynamic rebalancing for autoscaling** ([#10](https://github.com/HarperFast/harper-bigquery-sync/issues/10))
+- [ ] **Dynamic rebalancing for autoscaling** ([#10](https://github.com/HarperFast/bigquery-ingestor/issues/10))
   - Detect topology changes → pause → recalculate → resume
   - Graceful node additions/removals without manual intervention
   - Zero-downtime scaling capabilities
@@ -69,7 +69,7 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 
 ### Dynamic Schema Management
 
-- [ ] **Dynamic Harper table creation via Operations API** ([#7](https://github.com/HarperFast/harper-bigquery-sync/issues/7))
+- [ ] **Dynamic Harper table creation via Operations API** ([#7](https://github.com/HarperFast/bigquery-ingestor/issues/7))
   - Currently requires manual schema.graphql definition
   - Could dynamically create tables based on BigQuery schema at runtime
   - Enables automatic table creation from BigQuery metadata
@@ -82,7 +82,7 @@ These are potential enhancements without specific commitments:
 
 ### Production Operations
 
-- [ ] **Production deployment documentation** ([#4](https://github.com/HarperFast/harper-bigquery-sync/issues/4))
+- [ ] **Production deployment documentation** ([#4](https://github.com/HarperFast/bigquery-ingestor/issues/4))
   - Fabric deployment guide with one-click setup
   - Self-hosted installation for on-premise clusters
   - Monitoring dashboards (Grafana/CloudWatch templates)
@@ -143,7 +143,7 @@ These are potential enhancements without specific commitments:
 
 Want to help build v3.0 or tackle future considerations? See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-Check out [open issues on GitHub](https://github.com/HarperFast/harper-bigquery-sync/issues) for specific tasks you can pick up.
+Check out [open issues on GitHub](https://github.com/HarperFast/bigquery-ingestor/issues) for specific tasks you can pick up.
 
 ---
 

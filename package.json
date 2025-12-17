@@ -1,7 +1,7 @@
 {
-	"name": "@harperdb/harper-bigquery-sync",
+	"name": "@harperdb/bigquery-ingestor",
 	"version": "1.0.0",
-	"description": "BigQuery sync plugin for Harper",
+	"description": "BigQuery data ingestion plugin for Harper",
 	"license": "Apache-2.0",
 	"author": {
 		"name": "HarperDB, Inc.",

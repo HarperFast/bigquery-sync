@@ -32,7 +32,7 @@ Install Harper and add this plugin:
 
 # Clone this plugin
 cd your-harper-project
-npm install @harperdb/harper-bigquery-sync
+npm install @harperdb/bigquery-ingestor
 ```
 
 ### 2. Configure (Your Data)

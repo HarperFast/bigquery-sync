@@ -253,7 +253,7 @@ synthesizer:
 ## File Structure
 
 ```
-harper-bigquery-sync/
+bigquery-ingestor/
 ├── config.yaml                      # Unified configuration
 ├── service-account-key.json         # Shared credentials
 │
@@ -275,7 +275,7 @@ harper-bigquery-sync/
 │   └── cli.js                       # Synthesizer CLI
 │
 ├── schema/
-│   └── harper-bigquery-sync.graphql # Plugin GraphQL schema
+│   └── bigquery-ingestor.graphql # Plugin GraphQL schema
 │
 └── docs/
     ├── QUICKSTART.md                # 5-minute setup guide
