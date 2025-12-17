@@ -108,7 +108,9 @@ export class SyncEngine {
 		// Check if running in a multi-node cluster
 		if (server.nodes && Array.isArray(server.nodes) && server.nodes.length > 0) {
 			// Multi-node cluster: enumerate all nodes and their workers
-			logger.info(`[SyncEngine.discoverCluster] Multi-node cluster: ${server.nodes.length} other nodes, ${workerCount} workers per node`);
+			logger.info(
+				`[SyncEngine.discoverCluster] Multi-node cluster: ${server.nodes.length} other nodes, ${workerCount} workers per node`
+			);
 
 			// IMPORTANT: server.nodes only contains OTHER nodes, not the current node
 			// We must add the current node to the list
@@ -131,7 +133,9 @@ export class SyncEngine {
 					nodes.push(`${hostname}-${i}`);
 				}
 			}
-			logger.info(`[SyncEngine.discoverCluster] Total cluster size: ${nodes.length} workers across ${server.nodes.length + 1} nodes`);
+			logger.info(
+				`[SyncEngine.discoverCluster] Total cluster size: ${nodes.length} workers across ${server.nodes.length + 1} nodes`
+			);
 		} else {
 			// Single node: generate workers for current node only
 			logger.info(`[SyncEngine.discoverCluster] Single node with ${workerCount} workers`);

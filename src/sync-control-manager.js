@@ -134,19 +134,27 @@ export class SyncControlManager {
 	async startSubscriptionLoop() {
 		logger.info('[SyncControlManager.startSubscriptionLoop] Starting subscription loop');
 
+		const STATE_ID = 'sync-control';
+
 		try {
-			for await (const update of this.subscription) {
-				logger.info(
-					`[SyncControlManager.startSubscriptionLoop] Received update: ${update.command} (v${update.version})`
-				);
+			for await (const _update of this.subscription) {
+				// Subscription event received - fetch the actual record
+				const state = await this.tables.SyncControlState.get(STATE_ID);
+
+				if (!state) {
+					logger.warn('[SyncControlManager.startSubscriptionLoop] State record not found after update');
+					continue;
+				}
+
+				logger.info(`[SyncControlManager.startSubscriptionLoop] Received update: ${state.command} (v${state.version})`);
 
 				// Only process if version is newer
-				if (update.version > this.lastProcessedVersion) {
-					await this.processCommand(update);
-					this.lastProcessedVersion = update.version;
+				if (state.version > this.lastProcessedVersion) {
+					await this.processCommand(state);
+					this.lastProcessedVersion = state.version;
 				} else {
 					logger.debug(
-						`[SyncControlManager.startSubscriptionLoop] Skipping old version ${update.version} (last: ${this.lastProcessedVersion})`
+						`[SyncControlManager.startSubscriptionLoop] Skipping old version ${state.version} (last: ${this.lastProcessedVersion})`
 					);
 				}
 			}
