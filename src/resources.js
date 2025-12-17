@@ -170,7 +170,7 @@ export class SyncControl extends Resource {
 		await tables.SyncControlState.put({
 			id: STATE_ID,
 			command: action,
-			commandedAt: new Date(),
+			commandedAt: new Date().toISOString(),
 			commandedBy: `${server.hostname}-${server.workerIndex}`,
 			version: nextVersion,
 		});
