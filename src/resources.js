@@ -108,6 +108,24 @@ export class SyncControl extends Resource {
 		const STATE_ID = 'sync-control';
 		const globalState = await tables.SyncControlState.get(STATE_ID);
 		const controlManager = globals.get('controlManager');
+
+		// Handle case where controlManager not yet initialized (during startup)
+		if (!controlManager) {
+			logger.warn('[SyncControl.get] SyncControlManager not initialized yet');
+			return {
+				global: globalState || { command: 'unknown', version: 0 },
+				worker: {
+					nodeId: `${server.hostname}-${server.workerIndex}`,
+					running: false,
+					tables: [],
+					failedEngines: [],
+					status: 'initializing',
+				},
+				uptime: process.uptime(),
+				version: '2.0.0',
+			};
+		}
+
 		const workerStatus = controlManager.getStatus();
 
 		const response = {
@@ -134,6 +152,14 @@ export class SyncControl extends Resource {
 		// Validate action
 		if (!['start', 'stop', 'validate'].includes(action)) {
 			throw new Error(`Unknown action: ${action}`);
+		}
+
+		// Check if controlManager is initialized (optional warning)
+		const controlManager = globals.get('controlManager');
+		if (!controlManager) {
+			logger.warn(
+				'[SyncControl.post] SyncControlManager not initialized on this worker yet. Command will be processed once initialization completes.'
+			);
 		}
 
 		// Get current version
