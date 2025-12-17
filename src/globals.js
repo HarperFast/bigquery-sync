@@ -7,7 +7,7 @@ class Globals {
 		Globals.instance = this;
 	}
 	set(key, value) {
-		logger.debug(`[Globals.set] Setting '${key}' = ${JSON.stringify(value)}`);
+		logger.debug(`[Globals.set] Setting '${key}'`);
 		this.data[key] = value;
 	}
 	get(key) {
@@ -15,7 +15,7 @@ class Globals {
 		if (value === undefined) {
 			logger.debug(`[Globals.get] Key '${key}' not found`);
 		} else {
-			logger.debug(`[Globals.get] Retrieved '${key}' = ${JSON.stringify(value)}`);
+			logger.debug(`[Globals.get] Retrieved '${key}'`);
 		}
 		return value;
 	}
