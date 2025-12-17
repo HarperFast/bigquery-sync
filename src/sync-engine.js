@@ -103,26 +103,27 @@ export class SyncEngine {
 		logger.info(`[SyncEngine.discoverCluster] Current node ID: ${currentNodeId}`);
 
 		let nodes = [];
+		const workerCount = server.workerCount || 1;
 
 		// Check if running in a multi-node cluster
 		if (server.nodes && Array.isArray(server.nodes) && server.nodes.length > 0) {
 			// Multi-node cluster: enumerate all nodes and their workers
-			logger.info(`[SyncEngine.discoverCluster] Multi-node cluster detected with ${server.nodes.length} nodes`);
+			logger.info(`[SyncEngine.discoverCluster] Multi-node cluster: ${server.nodes.length} other nodes, ${workerCount} workers per node`);
 
-			// Debug: log what properties are available
-			if (server.nodes[0]) {
-				logger.info(`[SyncEngine.discoverCluster] Node object keys: ${Object.keys(server.nodes[0]).join(', ')}`);
-				logger.info(`[SyncEngine.discoverCluster] Sample node: ${JSON.stringify(server.nodes[0])}`);
+			// IMPORTANT: server.nodes only contains OTHER nodes, not the current node
+			// We must add the current node to the list
+
+			// Add current node first
+			for (let i = 0; i < workerCount; i++) {
+				nodes.push(`${server.hostname}-${i}`);
 			}
 
-			// Try to extract hostname from node objects
-			// Common patterns: node.hostname, node.host, node.id, node.name
+			// Add other cluster nodes from server.nodes
 			for (const node of server.nodes) {
-				const hostname = node.hostname || node.host || node.id || node.name;
-				const workerCount = node.workerCount || 1;
+				const hostname = node.name || node.hostname || node.host || node.id;
 
 				if (!hostname) {
-					logger.warn(`[SyncEngine.discoverCluster] Node missing hostname property: ${JSON.stringify(node)}`);
+					logger.warn(`[SyncEngine.discoverCluster] Node missing name property: ${JSON.stringify(node)}`);
 					continue;
 				}
 
@@ -130,10 +131,9 @@ export class SyncEngine {
 					nodes.push(`${hostname}-${i}`);
 				}
 			}
-			logger.info(`[SyncEngine.discoverCluster] Generated ${nodes.length} worker IDs from cluster nodes`);
+			logger.info(`[SyncEngine.discoverCluster] Total cluster size: ${nodes.length} workers across ${server.nodes.length + 1} nodes`);
 		} else {
 			// Single node: generate workers for current node only
-			const workerCount = server.workerCount || 1;
 			logger.info(`[SyncEngine.discoverCluster] Single node with ${workerCount} workers`);
 
 			for (let i = 0; i < workerCount; i++) {
