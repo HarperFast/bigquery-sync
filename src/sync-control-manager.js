@@ -139,7 +139,7 @@ export class SyncControlManager {
 		try {
 			for await (const _update of this.subscription) {
 				// Subscription event received - fetch the actual record
-				const state = await this.tables.SyncControlState.get(STATE_ID);
+				const state = await tables.SyncControlState.get(STATE_ID);
 
 				if (!state) {
 					logger.warn('[SyncControlManager.startSubscriptionLoop] State record not found after update');
