@@ -15,7 +15,7 @@ export class SyncEngine {
 
 		logger.info('Hostname: ' + server.hostname);
 		logger.info('Worker Id: ' + server.workerIndex);
-		logger.info('Nodes: ' + server.nodes);
+		logger.info('Worker Count: ' + (server.workerCount || 1));
 
 		this.initialized = false;
 		this.config = config;
@@ -102,15 +102,16 @@ export class SyncEngine {
 		const currentNodeId = [server.hostname, server.workerIndex].join('-');
 		logger.info(`[SyncEngine.discoverCluster] Current node ID: ${currentNodeId}`);
 
-		// Get cluster nodes from server.nodes if available
-		let nodes;
-		if (server.nodes && Array.isArray(server.nodes) && server.nodes.length > 0) {
-			nodes = server.nodes.map((node) => `${node.hostname}-${node.workerIndex || 0}`);
-			logger.info(`[SyncEngine.discoverCluster] Found ${nodes.length} nodes from server.nodes`);
-		} else {
-			logger.info('[SyncEngine.discoverCluster] No cluster nodes found, running in single-node mode');
-			nodes = [currentNodeId];
+		// Generate all worker IDs for the current node based on workerCount
+		let nodes = [];
+		const workerCount = server.workerCount || 1;
+		logger.info(`[SyncEngine.discoverCluster] Worker count: ${workerCount}`);
+
+		for (let i = 0; i < workerCount; i++) {
+			nodes.push(`${server.hostname}-${i}`);
 		}
+
+		logger.info(`[SyncEngine.discoverCluster] Generated ${nodes.length} worker IDs for current node`);
 
 		// Sort deterministically (lexicographic)
 		nodes.sort();
