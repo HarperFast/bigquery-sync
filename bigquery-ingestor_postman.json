@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Harper BigQuery Sync - Distributed Control Testing",
-		"description": "Test suite for distributed sync control feature. Tests cluster-wide start/stop/validate commands and status monitoring.",
+		"description": "Test suite for distributed sync control feature. Tests cluster-wide start/stop/validate commands and status monitoring.\n\n**Authentication:** This collection uses Basic Auth with default credentials (username: HDB_ADMIN, password: password). You can change these in the collection-level auth settings.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -55,8 +55,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Get initial sync status. Should show stopped state with version 0."
 					},
@@ -108,8 +112,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Start all sync engines across all workers. Command is issued cluster-wide via SyncControlState table."
 					},
@@ -157,8 +165,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Verify all sync engines started successfully. Check global state matches worker state."
 					},
@@ -208,8 +220,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Stop all sync engines across all workers. Command is issued cluster-wide."
 					},
@@ -245,8 +261,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Verify all sync engines stopped successfully."
 					},
@@ -292,8 +312,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Trigger validation on all workers. Validation can run while engines are stopped."
 					},
@@ -333,8 +357,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Test error handling with invalid action. Should reject with error."
 					},
@@ -381,8 +409,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Start sync, then manually restart Harper to test state recovery. After running this request, restart Harper and run the next request."
 					},
@@ -422,8 +454,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "After restarting Harper, verify engines automatically resume based on persisted state in SyncControlState table."
 					},
@@ -461,8 +497,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Get status from one worker. With multiple workers, each request may hit a different worker (round-robin)."
 					},
@@ -506,8 +546,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Issue start command. All workers across all threads should receive and process this command via subscription."
 					},
@@ -535,8 +579,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Check worker status. Run this multiple times to hit different workers."
 					},
@@ -564,8 +612,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Check worker status again (may hit different worker due to round-robin)."
 					},
@@ -593,8 +645,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Check worker status again (may hit different worker due to round-robin)."
 					},
@@ -637,8 +693,12 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControl"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControl"
+							]
 						},
 						"description": "Issue stop command to all workers."
 					},
@@ -679,8 +739,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncCheckpoint",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncCheckpoint"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncCheckpoint"
+							]
 						},
 						"description": "Query checkpoint table to see sync progress per node."
 					},
@@ -711,8 +775,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncAudit",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncAudit"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncAudit"
+							]
 						},
 						"description": "Query audit table to see validation results."
 					},
@@ -749,8 +817,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControlState",
-							"host": ["{{baseUrl}}"],
-							"path": ["SyncControlState"]
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"SyncControlState"
+							]
 						},
 						"description": "View the cluster-wide control state table directly. Should have single record with id='sync-control'."
 					},
@@ -759,5 +831,20 @@
 			],
 			"description": "Query Harper tables directly to inspect sync state, checkpoints, and audit logs."
 		}
-	]
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "username",
+				"value": "HDB_ADMIN",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "password",
+				"type": "string"
+			}
+		]
+	}
 }
