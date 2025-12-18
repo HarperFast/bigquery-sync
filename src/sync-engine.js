@@ -345,18 +345,20 @@ export class SyncEngine {
 					continue;
 				}
 
-				// Generate deterministic integer ID for fast indexing
+				// Generate deterministic ID for indexing
 				// Use hash of timestamp + deterministic fields for uniqueness
 				const timestamp = convertedRecord[timestampColumn];
 				const hashInput = `${timestamp}-${JSON.stringify(convertedRecord)}`;
 				const hash = createHash('sha256').update(hashInput).digest();
 				// Convert first 8 bytes of hash to positive integer within safe range
 				const bigIntId = hash.readBigInt64BE(0);
-				const id = Number(bigIntId < 0n ? -bigIntId : bigIntId) % Number.MAX_SAFE_INTEGER;
+				const numericId = Number(bigIntId < 0n ? -bigIntId : bigIntId) % Number.MAX_SAFE_INTEGER;
+				// Convert to string as required by Harper
+				const id = String(numericId);
 
-				// Store BigQuery record with integer ID for fast indexing
+				// Store BigQuery record with string ID
 				const mappedRecord = {
-					id, // Integer primary key for fast indexing
+					id, // String primary key (required by Harper)
 					...convertedRecord, // All BigQuery fields at top level
 					_syncedAt: new Date(), // Add sync timestamp
 				};
