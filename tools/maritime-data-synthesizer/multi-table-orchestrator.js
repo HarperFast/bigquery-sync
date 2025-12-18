@@ -305,6 +305,68 @@ export class MultiTableOrchestrator {
 	}
 
 	/**
+	 * Clears all data from all tables (keeps schema)
+	 * @param {string} dataset - Dataset name
+	 * @returns {Promise<void>}
+	 */
+	async clearAllTables(dataset) {
+		console.log(`\nClearing all data from tables (schema will be preserved)...`);
+
+		const tables = ['vessel_positions', 'port_events', 'vessel_metadata'];
+
+		for (const tableName of tables) {
+			try {
+				const table = this.bigquery.dataset(dataset).table(tableName);
+				const [exists] = await table.exists();
+
+				if (!exists) {
+					console.log(`  ⊘ Table does not exist: ${tableName}`);
+					continue;
+				}
+
+				await this.bigquery.query({
+					query: `DELETE FROM \`${this.projectId}.${dataset}.${tableName}\` WHERE true`,
+				});
+				console.log(`  ✓ Cleared: ${tableName}`);
+			} catch (error) {
+				console.error(`  ✗ Error clearing ${tableName}:`, error.message);
+			}
+		}
+
+		console.log(`\n✓ All tables cleared successfully`);
+	}
+
+	/**
+	 * Deletes all tables entirely (removes schema and data)
+	 * @param {string} dataset - Dataset name
+	 * @returns {Promise<void>}
+	 */
+	async deleteAllTables(dataset) {
+		console.log(`\nDeleting all tables (schema and data will be removed)...`);
+
+		const tables = ['vessel_positions', 'port_events', 'vessel_metadata'];
+
+		for (const tableName of tables) {
+			try {
+				const table = this.bigquery.dataset(dataset).table(tableName);
+				const [exists] = await table.exists();
+
+				if (!exists) {
+					console.log(`  ⊘ Table does not exist: ${tableName}`);
+					continue;
+				}
+
+				await table.delete();
+				console.log(`  ✓ Deleted: ${tableName}`);
+			} catch (error) {
+				console.error(`  ✗ Error deleting ${tableName}:`, error.message);
+			}
+		}
+
+		console.log(`\n✓ All tables deleted successfully`);
+	}
+
+	/**
 	 * Generates and inserts vessel_metadata
 	 * @param {string} dataset - Dataset name
 	 * @returns {Promise<Object>} Generation results
