@@ -266,6 +266,10 @@ async function runMultiTableMode(command, arg, config) {
 
 			console.log(`Generating data for scenario: ${scenario}`);
 
+			// Generate historical data by defaulting to 30 days ago
+			// This ensures the sync engine will find data when it starts
+			const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
 			const orchestrator = new MultiTableOrchestrator({
 				bigquery: {
 					projectId: config.projectId,
@@ -273,7 +277,7 @@ async function runMultiTableMode(command, arg, config) {
 					location: config.location,
 				},
 				scenario,
-				startTime: new Date(),
+				startTime: thirtyDaysAgo,
 			});
 
 			await orchestrator.generateAll({
