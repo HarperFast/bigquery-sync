@@ -262,8 +262,8 @@ export class SyncEngine {
 			logger.debug(`[SyncEngine.runSyncCycle] Batch size: ${batchSize}`);
 
 			// Pull records for this node's partition
-			logger.debug(
-				`[SyncEngine.runSyncCycle] Pulling partition data from BigQuery - nodeId: ${this.nodeId}, clusterSize: ${this.clusterSize}, lastTimestamp: ${this.lastCheckpoint.lastTimestamp}`
+			logger.info(
+				`[SyncEngine.runSyncCycle] Pulling partition data from BigQuery - nodeId: ${this.nodeId}, clusterSize: ${this.clusterSize}, lastTimestamp: ${this.lastCheckpoint.lastTimestamp}, batchSize: ${batchSize}`
 			);
 			const records = await this.client.pullPartition({
 				nodeId: this.nodeId,
