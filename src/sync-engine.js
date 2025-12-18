@@ -332,8 +332,29 @@ export class SyncEngine {
 
 		for (const record of records) {
 			try {
+				// Log first raw record from BigQuery to see structure
+				if (validRecords.length === 0) {
+					logger.info(
+						`[SyncEngine.ingestRecords] First raw BigQuery record keys: ${Object.keys(record).join(', ')}`
+					);
+					logger.info(
+						`[SyncEngine.ingestRecords] First raw BigQuery record sample: ${JSON.stringify(record).substring(0, 200)}`
+					);
+				}
+
 				// Convert BigQuery types to JavaScript primitives using type-converter utility
 				const convertedRecord = convertBigQueryTypes(record);
+
+				// Log first converted record
+				if (validRecords.length === 0) {
+					logger.info(
+						`[SyncEngine.ingestRecords] First converted record keys: ${Object.keys(convertedRecord).join(', ')}`
+					);
+					logger.info(
+						`[SyncEngine.ingestRecords] First converted record sample: ${JSON.stringify(convertedRecord).substring(0, 200)}`
+					);
+				}
+
 				logger.trace(`[SyncEngine.ingestRecords] Converted record: ${JSON.stringify(convertedRecord)}`);
 
 				// Validate timestamp exists
@@ -362,6 +383,14 @@ export class SyncEngine {
 					...convertedRecord, // All BigQuery fields at top level
 					_syncedAt: new Date(), // Add sync timestamp
 				};
+
+				// Log first mapped record to see what's being written to Harper
+				if (validRecords.length === 0) {
+					logger.info(`[SyncEngine.ingestRecords] First mapped record keys: ${Object.keys(mappedRecord).join(', ')}`);
+					logger.info(
+						`[SyncEngine.ingestRecords] First mapped record sample: ${JSON.stringify(mappedRecord).substring(0, 200)}`
+					);
+				}
 
 				validRecords.push(mappedRecord);
 			} catch (error) {
