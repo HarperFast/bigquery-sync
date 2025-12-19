@@ -418,10 +418,11 @@ export class SyncEngine {
 					}
 
 					for (const rec of validRecords) {
-						_lastResult = targetTableObj.create(rec);
+						// Use put (upsert) instead of create to handle duplicate IDs gracefully
+						_lastResult = targetTableObj.put(rec);
 					}
 				} catch (error) {
-					logger.error(`[SyncEngine.ingestRecords] Harper create failed: ${error.message}`, error);
+					logger.error(`[SyncEngine.ingestRecords] Harper put failed: ${error.message}`, error);
 					if (error.errors) {
 						error.errors.forEach((e) => logger.error(`  ${e.reason} at ${e.location}: ${e.message}`));
 					}
