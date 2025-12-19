@@ -3,6 +3,26 @@
  * Generates realistic synthetic vessel tracking data with global distribution
  */
 
+/**
+ * Converts timestamp with fractional milliseconds to ISO string with microsecond precision
+ * This ensures even distribution across MOD partitioning in BigQuery
+ * @param {number} timestampMs - Timestamp in milliseconds (can have fractional part)
+ * @returns {string} ISO 8601 timestamp with microsecond precision
+ */
+function toISOStringWithMicros(timestampMs) {
+	// Add random microseconds (0-999) to ensure even distribution
+	const randomMicros = Math.floor(Math.random() * 1000);
+	const totalMicros = Math.floor(timestampMs * 1000) + randomMicros;
+
+	const date = new Date(Math.floor(timestampMs));
+	const isoBase = date.toISOString(); // e.g., "2023-12-18T18:36:07.890Z"
+
+	// Replace milliseconds with full microsecond precision
+	// ISO format: YYYY-MM-DDTHH:MM:SS.sssZ -> YYYY-MM-DDTHH:MM:SS.ssssssZ
+	const microsStr = String(totalMicros % 1000000).padStart(6, '0');
+	return isoBase.replace(/\.\d{3}Z$/, `.${microsStr}Z`);
+}
+
 // Major ports around the world with coordinates and traffic weight
 const MAJOR_PORTS = [
 	// Asia-Pacific (50% of global maritime traffic)
@@ -510,7 +530,7 @@ class MaritimeVesselGenerator {
 				status: position.status,
 				destination: position.destination,
 				eta: new Date(recordTime.getTime() + Math.random() * 7 * 24 * 3600000).toISOString(), // Random ETA within 7 days
-				timestamp: recordTime.toISOString(),
+				timestamp: toISOStringWithMicros(recordTime.getTime()),
 				report_date: recordTime.toISOString().split('T')[0].replace(/-/g, ''), // YYYYMMDD
 			};
 
