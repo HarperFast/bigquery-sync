@@ -101,6 +101,12 @@ export class SyncEngine {
 		logger.debug('[SyncEngine.discoverCluster] Querying Harper cluster API');
 		const currentNodeId = [server.hostname, server.workerIndex].join('-');
 		logger.info(`[SyncEngine.discoverCluster] Current node ID: ${currentNodeId}`);
+		logger.info(`[SyncEngine.discoverCluster] server.hostname: ${server.hostname}`);
+		logger.info(`[SyncEngine.discoverCluster] server.workerIndex: ${server.workerIndex}`);
+		logger.info(`[SyncEngine.discoverCluster] server.workerCount: ${server.workerCount}`);
+		logger.info(
+			`[SyncEngine.discoverCluster] server.nodes: ${server.nodes ? JSON.stringify(server.nodes) : 'undefined'}`
+		);
 
 		let nodes = [];
 		const workerCount = server.workerCount || 1;

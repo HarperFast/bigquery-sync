@@ -1,7 +1,7 @@
 {
 	"info": {
-		"name": "Harper BigQuery Sync - Distributed Control Testing",
-		"description": "Test suite for distributed sync control feature. Tests cluster-wide start/stop/validate commands and status monitoring.\n\n**Authentication:** This collection uses Basic Auth with default credentials (username: HDB_ADMIN, password: password). You can change these in the collection-level auth settings.",
+		"name": "bigquery-ingestor",
+		"description": "Test suite for BigQuery Ingestor component. Tests cluster-wide start/stop/validate commands, status monitoring, and data ingestion verification.\\n\\n**Authentication:** This collection uses Basic Auth with default credentials (username: admin, password: HarperRocks!). You can change these in the collection-level auth settings.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -738,12 +738,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/SyncCheckpoint",
+							"raw": "{{baseUrl}}/SyncCheckpoint/",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"SyncCheckpoint"
+								"SyncCheckpoint/"
 							]
 						},
 						"description": "Query checkpoint table to see sync progress per node."
@@ -774,20 +774,26 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/SyncAudit",
+							"raw": "{{baseUrl}}/SyncAudit/",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"SyncAudit"
+								"SyncAudit/"
 							]
 						},
 						"description": "Query audit table to see validation results."
 					},
 					"response": []
-				},
+				}
+			],
+			"description": "Query Harper tables directly to inspect sync state, checkpoints, and audit logs."
+		},
+		{
+			"name": "5. Data Ingestion Verification",
+			"item": [
 				{
-					"name": "4.3 View SyncControlState Table",
+					"name": "5.1 Verify PortEvents Data Ingested",
 					"event": [
 						{
 							"listen": "test",
@@ -797,14 +803,31 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Returns array with state record\", function () {",
+									"pm.test(\"Returns array from PortEvents table\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"PortEvents table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'PortEvents table should contain ingested records');",
+									"    console.log('PortEvents record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"PortEvents records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
 									"    if (jsonData.length > 0) {",
-									"        pm.expect(jsonData[0]).to.have.property('id', 'sync-control');",
-									"        pm.expect(jsonData[0]).to.have.property('command');",
-									"        pm.expect(jsonData[0]).to.have.property('version');",
-									"        pm.expect(jsonData[0]).to.have.property('commandedBy');",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('event_time');",
+									"        pm.expect(firstRecord).to.have.property('port_id');",
+									"        pm.expect(firstRecord).to.have.property('port_name');",
+									"        pm.expect(firstRecord).to.have.property('vessel_mmsi');",
+									"        pm.expect(firstRecord).to.have.property('event_type');",
+									"        pm.expect(firstRecord).to.have.property('latitude');",
+									"        pm.expect(firstRecord).to.have.property('longitude');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample PortEvents record:', JSON.stringify(firstRecord, null, 2));",
 									"    }",
 									"});"
 								],
@@ -816,20 +839,135 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/SyncControlState",
+							"raw": "{{baseUrl}}/PortEvents/",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"SyncControlState"
+								"PortEvents/"
 							]
 						},
-						"description": "View the cluster-wide control state table directly. Should have single record with id='sync-control'."
+						"description": "Verify that port events data has been ingested from BigQuery. Should return records with port arrival/departure events."
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Verify VesselMetadata Data Ingested",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array from VesselMetadata table\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"VesselMetadata table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'VesselMetadata table should contain ingested records');",
+									"    console.log('VesselMetadata record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"VesselMetadata records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('last_updated');",
+									"        pm.expect(firstRecord).to.have.property('mmsi');",
+									"        pm.expect(firstRecord).to.have.property('vessel_name');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample VesselMetadata record:', JSON.stringify(firstRecord, null, 2));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/VesselMetadata/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"VesselMetadata/"
+							]
+						},
+						"description": "Verify that vessel metadata has been ingested from BigQuery. Should return records with vessel information."
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Verify VesselPositions Data Ingested",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array from VesselPositions table\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"VesselPositions table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'VesselPositions table should contain ingested records');",
+									"    console.log('VesselPositions record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"VesselPositions records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('timestamp');",
+									"        pm.expect(firstRecord).to.have.property('mmsi');",
+									"        pm.expect(firstRecord).to.have.property('vessel_name');",
+									"        pm.expect(firstRecord).to.have.property('latitude');",
+									"        pm.expect(firstRecord).to.have.property('longitude');",
+									"        pm.expect(firstRecord).to.have.property('speed_knots');",
+									"        pm.expect(firstRecord).to.have.property('heading');",
+									"        pm.expect(firstRecord).to.have.property('course');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample VesselPositions record:', JSON.stringify(firstRecord, null, 2));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/VesselPositions/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"VesselPositions/"
+							]
+						},
+						"description": "Verify that vessel position data has been ingested from BigQuery. Should return records with vessel tracking positions."
 					},
 					"response": []
 				}
 			],
-			"description": "Query Harper tables directly to inspect sync state, checkpoints, and audit logs."
+			"description": "Verify that data has been successfully ingested from BigQuery into Harper tables. These tests query the actual data tables (PortEvents, VesselMetadata, VesselPositions) via REST endpoints to confirm records exist and have the expected fields."
 		}
 	],
 	"auth": {
@@ -837,12 +975,12 @@
 		"basic": [
 			{
 				"key": "username",
-				"value": "HDB_ADMIN",
+				"value": "admin",
 				"type": "string"
 			},
 			{
 				"key": "password",
-				"value": "password",
+				"value": "HarperRocks!",
 				"type": "string"
 			}
 		]

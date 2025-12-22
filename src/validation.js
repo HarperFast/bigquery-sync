@@ -3,7 +3,7 @@
 // Validation service for data integrity checks
 // NOTE: Avoids count-based validation since Harper counts are estimates
 
-/* global harperCluster, tables */
+/* global server, tables */
 
 import { BigQueryClient } from './bigquery-client.js';
 import { createHash } from 'node:crypto';
@@ -408,19 +408,61 @@ export class ValidationService {
 
 	async discoverCluster() {
 		logger.trace('[ValidationService.discoverCluster] Discovering cluster topology for validation');
-		const nodes = await harperCluster.getNodes();
-		logger.trace(`[ValidationService.discoverCluster] Found ${nodes.length} nodes`);
-		const sortedNodes = nodes.sort((a, b) => a.id.localeCompare(b.id));
-		const currentNodeId = harperCluster.currentNode.id;
-		const nodeIndex = sortedNodes.findIndex((n) => n.id === currentNodeId);
+		const currentNodeId = [server.hostname, server.workerIndex].join('-');
+		logger.trace(`[ValidationService.discoverCluster] Current node ID: ${currentNodeId}`);
+
+		let nodes = [];
+		const workerCount = server.workerCount || 1;
+
+		// Check if running in a multi-node cluster
+		if (server.nodes && Array.isArray(server.nodes) && server.nodes.length > 0) {
+			// Multi-node cluster: enumerate all nodes and their workers
+			logger.trace(
+				`[ValidationService.discoverCluster] Multi-node cluster: ${server.nodes.length} other nodes, ${workerCount} workers per node`
+			);
+
+			// Add current node first
+			for (let i = 0; i < workerCount; i++) {
+				nodes.push(`${server.hostname}-${i}`);
+			}
+
+			// Add other cluster nodes
+			for (const node of server.nodes) {
+				const hostname = node.name || node.hostname || node.host || node.id;
+				if (!hostname) {
+					logger.warn(`[ValidationService.discoverCluster] Node missing name property: ${JSON.stringify(node)}`);
+					continue;
+				}
+				for (let i = 0; i < workerCount; i++) {
+					nodes.push(`${hostname}-${i}`);
+				}
+			}
+		} else {
+			// Single node: generate workers for current node only
+			logger.trace(`[ValidationService.discoverCluster] Single node with ${workerCount} workers`);
+			for (let i = 0; i < workerCount; i++) {
+				nodes.push(`${server.hostname}-${i}`);
+			}
+		}
+
+		// Sort deterministically
+		nodes.sort();
+		const nodeIndex = nodes.findIndex((n) => n === currentNodeId);
+
+		if (nodeIndex === -1) {
+			logger.error(
+				`[ValidationService.discoverCluster] Current node '${currentNodeId}' not found in cluster nodes: ${nodes.join(', ')}`
+			);
+			throw new Error(`Current node ${currentNodeId} not found in cluster`);
+		}
 
 		logger.trace(
-			`[ValidationService.discoverCluster] Current node: ${currentNodeId}, index: ${nodeIndex}, clusterSize: ${sortedNodes.length}`
+			`[ValidationService.discoverCluster] Current node: ${currentNodeId}, index: ${nodeIndex}, clusterSize: ${nodes.length}`
 		);
 
 		return {
 			nodeId: nodeIndex,
-			clusterSize: sortedNodes.length,
+			clusterSize: nodes.length,
 		};
 	}
 }

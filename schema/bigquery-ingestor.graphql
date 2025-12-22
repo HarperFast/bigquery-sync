@@ -1,20 +1,17 @@
 # File: bigquery-ingestor.graphql
 # GraphQL schema definitions for tables
 
-# Example tables - to be replaced with dynamic tables later
+# Example tables - dynamic schema allows BigQuery fields to be added automatically
 type VesselPositions @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 type PortEvents @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 type VesselMetadata @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 # Checkpoint table for ingestion
