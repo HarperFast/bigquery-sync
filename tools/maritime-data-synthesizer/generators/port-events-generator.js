@@ -7,6 +7,26 @@
 
 import { SAMPLE_PORTS, EVENT_TYPES, SAMPLE_VESSELS } from '../../../test/fixtures/multi-table-test-data.js';
 
+/**
+ * Converts timestamp with fractional milliseconds to ISO string with microsecond precision
+ * This ensures even distribution across MOD partitioning in BigQuery
+ * @param {number} timestampMs - Timestamp in milliseconds (can have fractional part)
+ * @returns {string} ISO 8601 timestamp with microsecond precision
+ */
+function toISOStringWithMicros(timestampMs) {
+	// Add random microseconds (0-999) to ensure even distribution
+	const randomMicros = Math.floor(Math.random() * 1000);
+	const totalMicros = Math.floor(timestampMs * 1000) + randomMicros;
+
+	const date = new Date(Math.floor(timestampMs));
+	const isoBase = date.toISOString(); // e.g., "2023-12-18T18:36:07.890Z"
+
+	// Replace milliseconds with full microsecond precision
+	// ISO format: YYYY-MM-DDTHH:MM:SS.sssZ -> YYYY-MM-DDTHH:MM:SS.ssssssZ
+	const microsStr = String(totalMicros % 1000000).padStart(6, '0');
+	return isoBase.replace(/\.\d{3}Z$/, `.${microsStr}Z`);
+}
+
 export class PortEventsGenerator {
 	/**
 	 * Creates a new PortEventsGenerator
@@ -70,7 +90,7 @@ export class PortEventsGenerator {
 
 			// Generate event
 			const event = {
-				event_time: new Date(currentTime).toISOString(),
+				event_time: toISOStringWithMicros(currentTime),
 				port_id: port.port_id,
 				port_name: port.name,
 				vessel_mmsi: mmsi,
@@ -161,7 +181,7 @@ export class PortEventsGenerator {
 
 			// Arrival
 			events.push({
-				event_time: new Date(currentTime).toISOString(),
+				event_time: toISOStringWithMicros(currentTime),
 				port_id: port.port_id,
 				port_name: port.name,
 				vessel_mmsi: mmsi,
@@ -175,7 +195,7 @@ export class PortEventsGenerator {
 
 			// Berthed
 			events.push({
-				event_time: new Date(currentTime).toISOString(),
+				event_time: toISOStringWithMicros(currentTime),
 				port_id: port.port_id,
 				port_name: port.name,
 				vessel_mmsi: mmsi,
@@ -189,7 +209,7 @@ export class PortEventsGenerator {
 
 			// Departure
 			events.push({
-				event_time: new Date(currentTime).toISOString(),
+				event_time: toISOStringWithMicros(currentTime),
 				port_id: port.port_id,
 				port_name: port.name,
 				vessel_mmsi: mmsi,
@@ -242,7 +262,7 @@ export class PortEventsGenerator {
 			const eventType = EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)];
 
 			events.push({
-				event_time: new Date(currentTime).toISOString(),
+				event_time: toISOStringWithMicros(currentTime),
 				port_id: port.port_id,
 				port_name: port.name,
 				vessel_mmsi: mmsi,

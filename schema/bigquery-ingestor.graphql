@@ -1,20 +1,17 @@
 # File: bigquery-ingestor.graphql
 # GraphQL schema definitions for tables
 
-# Example tables - to be replaced with dynamic tables later
+# Example tables - dynamic schema allows BigQuery fields to be added automatically
 type VesselPositions @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 type PortEvents @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 type VesselMetadata @table {
 	id: ID @primaryKey
-	# All BigQuery fields stored directly at top level
 }
 
 # Checkpoint table for ingestion
@@ -41,6 +38,16 @@ type SyncAudit @table {
 	status: String!
 	reason: String
 	recordSample: String
+}
+
+# Cluster-wide sync control state
+# Single record coordinates all workers across all nodes
+type SyncControlState @table {
+	id: String! @primaryKey # Always "sync-control" (singleton)
+	command: String! # "start" | "stop" | "validate"
+	commandedAt: Date! @indexed # When command was issued
+	commandedBy: String # Node that issued (hostname-workerIndex)
+	version: Int! # Monotonically increasing for ordering
 }
 
 # Schema lock table for distributed schema checking

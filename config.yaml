@@ -9,7 +9,7 @@ pluginModule: ./src/index.js
 rest: true
 
 graphqlSchema:
-  files: 'schema/harper-bigquery-sync.graphql'
+  files: 'schema/bigquery-ingestor.graphql'
 
 jsResource:
   files: 'src/resources.js'

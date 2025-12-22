@@ -33,12 +33,13 @@ function showHelp() {
 	}
 
 	console.log('\nExamples:');
-	console.log('  maritime-data-synthesizer initialize 30    # Load 30 days of historical data');
+	console.log('  maritime-data-synthesizer initialize realistic # Load realistic test data (24 hrs)');
 	console.log('  maritime-data-synthesizer start            # Start with auto-backfill (rolling window)');
 	console.log('  maritime-data-synthesizer start --no-backfill  # Start without backfill');
 	console.log('  maritime-data-synthesizer stats            # View statistics');
-	console.log('  maritime-data-synthesizer clear            # Clear all data (keeps table)');
-	console.log('  maritime-data-synthesizer reset 60         # Reset with 60 days of data');
+	console.log('  maritime-data-synthesizer clear            # Clear all data (keeps tables)');
+	console.log('  maritime-data-synthesizer clean            # Delete all tables and data');
+	console.log('  maritime-data-synthesizer reset realistic  # Delete and reinitialize with data');
 	console.log('\nConfiguration:');
 	console.log('  All settings are loaded from config.yaml');
 	console.log('  - Uses same BigQuery connection as the plugin (bigquery section)');
@@ -266,6 +267,10 @@ async function runMultiTableMode(command, arg, config) {
 
 			console.log(`Generating data for scenario: ${scenario}`);
 
+			// Generate historical data by defaulting to 30 days ago
+			// This ensures the sync engine will find data when it starts
+			const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
 			const orchestrator = new MultiTableOrchestrator({
 				bigquery: {
 					projectId: config.projectId,
@@ -273,7 +278,7 @@ async function runMultiTableMode(command, arg, config) {
 					location: config.location,
 				},
 				scenario,
-				startTime: new Date(),
+				startTime: thirtyDaysAgo,
 			});
 
 			await orchestrator.generateAll({
@@ -348,15 +353,53 @@ async function runMultiTableMode(command, arg, config) {
 			break;
 		}
 
+		case 'clear': {
+			console.log('Clearing all data from tables (schema will be preserved)...');
+
+			const orchestrator = new MultiTableOrchestrator({
+				bigquery: {
+					projectId: config.projectId,
+					keyFilename: config.credentials,
+					location: config.location,
+				},
+				scenario: 'small', // Scenario doesn't matter for clear
+			});
+
+			await orchestrator.clearAllTables(config.datasetId);
+
+			console.log('\nClear complete!');
+			setTimeout(() => process.exit(0), 100);
+			break;
+		}
+
+		case 'clean': {
+			console.log('Deleting all tables (schema and data will be removed)...');
+
+			const orchestrator = new MultiTableOrchestrator({
+				bigquery: {
+					projectId: config.projectId,
+					keyFilename: config.credentials,
+					location: config.location,
+				},
+				scenario: 'small', // Scenario doesn't matter for clean
+			});
+
+			await orchestrator.deleteAllTables(config.datasetId);
+
+			console.log('\nClean complete!');
+			setTimeout(() => process.exit(0), 100);
+			break;
+		}
+
 		case 'stats':
-		case 'clear':
-		case 'clean':
 		case 'reset':
 			console.error(`\nCommand "${command}" is not yet implemented in multi-table mode.`);
 			console.error('Available commands for multi-table mode:');
 			console.error('  initialize <scenario>  - Generate test data (scenarios: small, realistic, stress)');
 			console.error('  start                  - Start continuous generation with rolling window');
-			console.error('\nOther commands (stats, clear, clean, reset) are coming soon!');
+			console.error('  clear                  - Clear all data from tables (keeps schema)');
+			console.error('  clean                  - Delete all tables (removes schema and data)');
+			console.error('\nOther commands (stats, reset) are coming soon!');
 			process.exit(1);
 			break;
 

@@ -211,7 +211,7 @@ The BigQuery plugin integrates with HarperDB. When modifying plugin code:
 - `src/validation.js` - Data validation and auditing
 - `src/query-builder.js` - SQL query construction
 - `src/config-loader.js` - Configuration parsing (single/multi-table)
-- `schema/harper-bigquery-sync.graphql` - GraphQL schema
+- `schema/bigquery-ingestor.graphql` - GraphQL schema
 - `test/` - Unit tests for all core functionality
 
 ## Synthesizer Development

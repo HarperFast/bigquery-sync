@@ -32,7 +32,7 @@ Install Harper and add this plugin:
 
 # Clone this plugin
 cd your-harper-project
-npm install @harperdb/harper-bigquery-sync
+npm install @harperdb/bigquery-ingestor
 ```
 
 ### 2. Configure (Your Data)
@@ -307,21 +307,114 @@ Perfect for testing sync performance, multi-table coordination, and distributed 
 
 ## Monitoring & Operations
 
-### Check Sync Status
+### Distributed Sync Control
 
-Query the REST API:
+The plugin provides cluster-wide sync control via REST API. All commands replicate across nodes automatically.
+
+**Available Commands:**
 
 ```bash
-# Get current status
-curl http://localhost:9926/SyncControl
+# Get current status (GET)
+curl http://localhost:9926/SyncControl \
+  -u admin:HarperRocks!
 
-# Control sync
+# Start sync across entire cluster (POST)
 curl -X POST http://localhost:9926/SyncControl \
+  -u admin:HarperRocks! \
   -H "Content-Type: application/json" \
-  -d '{"action": "start"}'  # or "stop"
+  -d '{"action": "start"}'
+
+# Stop sync across entire cluster (POST)
+curl -X POST http://localhost:9926/SyncControl \
+  -u admin:HarperRocks! \
+  -H "Content-Type: application/json" \
+  -d '{"action": "stop"}'
+
+# Run validation across cluster (POST)
+curl -X POST http://localhost:9926/SyncControl \
+  -u admin:HarperRocks! \
+  -H "Content-Type: application/json" \
+  -d '{"action": "validate"}'
 ```
 
+**Status Response Format:**
+
+```json
+{
+	"global": {
+		"command": "start",
+		"commandedAt": "2025-12-16T20:30:00Z",
+		"commandedBy": "node1-0",
+		"version": 42
+	},
+	"worker": {
+		"nodeId": "node1-0",
+		"running": true,
+		"tables": [
+			{ "tableId": "vessel_positions", "running": true, "phase": "steady" },
+			{ "tableId": "port_events", "running": true, "phase": "catchup" }
+		],
+		"failedEngines": []
+	},
+	"uptime": 3600,
+	"version": "2.0.0"
+}
+```
+
+- **global**: Cluster-wide sync command state (replicated across all nodes via HarperDB)
+- **worker**: This specific worker thread's status
+- **nodeId**: Identifies worker as `hostname-workerIndex`
+- **tables**: Status per sync engine (one per configured table)
+- **failedEngines**: Any engines that failed to start
+
+### Data Validation
+
+Run validation to verify data integrity across the cluster:
+
+```bash
+curl -X POST http://localhost:9926/SyncControl \
+  -u admin:HarperRocks! \
+  -H "Content-Type: application/json" \
+  -d '{"action": "validate"}'
+```
+
+**Validation performs three checks per table:**
+
+1. **Progress Check** - Verifies sync is advancing, checks for stalled workers
+   - Status: `healthy`, `lagging`, `severely_lagging`, `stalled`, `no_checkpoint`
+
+2. **Smoke Test** - Confirms recent data (last 5 minutes) is queryable
+   - Status: `healthy`, `no_recent_data`, `query_failed`, `table_not_found`
+
+3. **Spot Check** - Validates data integrity bidirectionally
+   - Checks if Harper records exist in BigQuery (detects phantom records)
+   - Checks if BigQuery records exist in Harper (detects missing records)
+   - Status: `healthy`, `issues_found`, `no_data`, `check_failed`
+
+**View validation results:**
+
+```bash
+# Get recent validation audits
+curl http://localhost:9926/SyncAudit/ \
+  -u admin:HarperRocks!
+```
+
+Each validation run creates audit records with:
+
+- `timestamp` - When validation ran
+- `nodeId` - Which worker performed the validation
+- `status` - Overall status: `healthy`, `issues_detected`, or `error`
+- `checkResults` - JSON with detailed results per table and check
+
 ### View Checkpoints
+
+```bash
+# REST API
+curl http://localhost:9926/SyncCheckpoint/ \
+  -u admin:HarperRocks!
+```
+
+Or query via SQL:
 
 ```sql
 -- Check sync progress per node
@@ -336,14 +429,44 @@ SELECT
 FROM SyncCheckpoint;
 ```
 
-### View Validation Results
+### Access Synced Data
 
-```sql
--- Check recent audits
-SELECT * FROM SyncAudit
-WHERE timestamp > NOW() - INTERVAL '1 hour'
-ORDER BY timestamp DESC;
+All synced tables are accessible via REST API:
+
+```bash
+# Query vessel positions (note trailing slash)
+curl http://localhost:9926/VesselPositions/ \
+  -u admin:HarperRocks!
+
+# Query port events
+curl http://localhost:9926/PortEvents/ \
+  -u admin:HarperRocks!
+
+# Query vessel metadata
+curl http://localhost:9926/VesselMetadata/ \
+  -u admin:HarperRocks!
 ```
+
+**Important:** REST endpoints require a trailing slash (`/TableName/`) to return data arrays. Without the trailing slash, you get table metadata instead of records.
+
+### Postman Collection
+
+A comprehensive Postman collection is included for testing all endpoints:
+
+```bash
+# Import into Postman
+bigquery-ingestor_postman.json
+```
+
+**Collection includes:**
+
+- **Cluster Control** - Start, stop, validate commands
+- **Status Monitoring** - Check sync status and worker health
+- **Data Verification** - Query PortEvents, VesselMetadata, VesselPositions
+- **Checkpoint Inspection** - View sync progress per node
+- **Audit Review** - Check validation results
+
+**Authentication:** Uses Basic Auth with default credentials (admin / HarperRocks!). Update the collection variables if using different credentials.
 
 ### Query Synced Data
 

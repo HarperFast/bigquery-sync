@@ -197,12 +197,17 @@ export class BigQueryClient {
 			batchSize,
 		});
 
+		// Log actual query parameters for debugging
+		logger.info(
+			`[BigQueryClient.pullPartition] Query params: nodeId=${params.nodeId}, clusterSize=${params.clusterSize}, lastTimestamp=${params.lastTimestamp}, batchSize=${params.batchSize}`
+		);
+
 		const options = {
 			query,
 			params: params,
 		};
 
-		logger.trace(`[BigQueryClient.pullPartition] Generated SQL query: ${query}`);
+		logger.info(`[BigQueryClient.pullPartition] Generated SQL query: ${query}`);
 
 		return await this.executeWithRetry(async () => {
 			logger.debug('[BigQueryClient.pullPartition] Executing BigQuery query...');
@@ -210,9 +215,17 @@ export class BigQueryClient {
 			const [rows] = await this.client.query(options);
 			const duration = Date.now() - startTime;
 			logger.info(`[BigQueryClient.pullPartition] Query complete - returned ${rows.length} rows in ${duration}ms`);
-			logger.debug(
-				`[BigQueryClient.pullPartition] First row timestamp: ${rows.length > 0 ? Date(rows[0][this.timestampColumn]) : 'N/A'}`
-			);
+
+			if (rows.length === 0) {
+				// Log diagnostic info when no results returned
+				logger.warn(
+					`[BigQueryClient.pullPartition] No results! Params were: nodeId=${params.nodeId}, clusterSize=${params.clusterSize}, lastTimestamp=${params.lastTimestamp}, batchSize=${params.batchSize}`
+				);
+			} else {
+				logger.debug(
+					`[BigQueryClient.pullPartition] First row timestamp: ${rows.length > 0 ? rows[0][this.timestampColumn]?.value || rows[0][this.timestampColumn] : 'N/A'}`
+				);
+			}
 			return rows;
 		}, 'pullPartition');
 	}

@@ -8,6 +8,26 @@
 
 import { SAMPLE_VESSELS, VESSEL_STATUSES } from '../../../test/fixtures/multi-table-test-data.js';
 
+/**
+ * Converts timestamp with fractional milliseconds to ISO string with microsecond precision
+ * This ensures even distribution across MOD partitioning in BigQuery
+ * @param {number} timestampMs - Timestamp in milliseconds (can have fractional part)
+ * @returns {string} ISO 8601 timestamp with microsecond precision
+ */
+function toISOStringWithMicros(timestampMs) {
+	// Add random microseconds (0-999) to ensure even distribution
+	const randomMicros = Math.floor(Math.random() * 1000);
+	const totalMicros = Math.floor(timestampMs * 1000) + randomMicros;
+
+	const date = new Date(Math.floor(timestampMs));
+	const isoBase = date.toISOString(); // e.g., "2023-12-18T18:36:07.890Z"
+
+	// Replace milliseconds with full microsecond precision
+	// ISO format: YYYY-MM-DDTHH:MM:SS.sssZ -> YYYY-MM-DDTHH:MM:SS.ssssssZ
+	const microsStr = String(totalMicros % 1000000).padStart(6, '0');
+	return isoBase.replace(/\.\d{3}Z$/, `.${microsStr}Z`);
+}
+
 // Additional data for realistic vessel generation
 const VESSEL_TYPES = [
 	'Container Ship',
@@ -158,10 +178,10 @@ export class VesselMetadataGenerator {
 		const dimensions = this.generateDimensions(vesselType);
 
 		// Random timestamp within the time range
-		const lastUpdated = new Date(this.startTime.getTime() + Math.random() * this.durationMs).toISOString();
+		const lastUpdated = new Date(this.startTime.getTime() + Math.random() * this.durationMs);
 
 		return {
-			last_updated: lastUpdated,
+			last_updated: toISOStringWithMicros(lastUpdated),
 			mmsi: mmsi,
 			imo: imo,
 			vessel_name: vesselName,
@@ -187,10 +207,10 @@ export class VesselMetadataGenerator {
 	 * @private
 	 */
 	enrichVesselMetadata(sampleVessel) {
-		const lastUpdated = new Date(this.startTime.getTime() + Math.random() * this.durationMs).toISOString();
+		const lastUpdated = new Date(this.startTime.getTime() + Math.random() * this.durationMs);
 
 		return {
-			last_updated: lastUpdated,
+			last_updated: toISOStringWithMicros(lastUpdated),
 			mmsi: sampleVessel.mmsi,
 			imo: sampleVessel.imo,
 			vessel_name: sampleVessel.vessel_name,
@@ -384,12 +404,12 @@ export class VesselMetadataGenerator {
 
 			// Generate subsequent updates with minor changes
 			for (let i = 1; i < updatesPerVessel; i++) {
-				const updateTime = new Date(this.startTime.getTime() + (this.durationMs / updatesPerVessel) * i).toISOString();
+				const updateTime = this.startTime.getTime() + (this.durationMs / updatesPerVessel) * i;
 
 				// Update with occasional changes
 				vessel = {
 					...vessel,
-					last_updated: updateTime,
+					last_updated: toISOStringWithMicros(updateTime),
 					status: VESSEL_STATUSES[Math.floor(Math.random() * VESSEL_STATUSES.length)],
 					// Occasionally change owner (ownership transfer)
 					owner: Math.random() < 0.1 ? this.generateOwner() : vessel.owner,

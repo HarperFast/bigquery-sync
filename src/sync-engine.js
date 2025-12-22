@@ -15,7 +15,7 @@ export class SyncEngine {
 
 		logger.info('Hostname: ' + server.hostname);
 		logger.info('Worker Id: ' + server.workerIndex);
-		logger.info('Nodes: ' + server.nodes);
+		logger.info('Worker Count: ' + (server.workerCount || 1));
 
 		this.initialized = false;
 		this.config = config;
@@ -101,15 +101,54 @@ export class SyncEngine {
 		logger.debug('[SyncEngine.discoverCluster] Querying Harper cluster API');
 		const currentNodeId = [server.hostname, server.workerIndex].join('-');
 		logger.info(`[SyncEngine.discoverCluster] Current node ID: ${currentNodeId}`);
+		logger.info(`[SyncEngine.discoverCluster] server.hostname: ${server.hostname}`);
+		logger.info(`[SyncEngine.discoverCluster] server.workerIndex: ${server.workerIndex}`);
+		logger.info(`[SyncEngine.discoverCluster] server.workerCount: ${server.workerCount}`);
+		logger.info(
+			`[SyncEngine.discoverCluster] server.nodes: ${server.nodes ? JSON.stringify(server.nodes) : 'undefined'}`
+		);
 
-		// Get cluster nodes from server.nodes if available
-		let nodes;
+		let nodes = [];
+		const workerCount = server.workerCount || 1;
+
+		// Check if running in a multi-node cluster
 		if (server.nodes && Array.isArray(server.nodes) && server.nodes.length > 0) {
-			nodes = server.nodes.map((node) => `${node.hostname}-${node.workerIndex || 0}`);
-			logger.info(`[SyncEngine.discoverCluster] Found ${nodes.length} nodes from server.nodes`);
+			// Multi-node cluster: enumerate all nodes and their workers
+			logger.info(
+				`[SyncEngine.discoverCluster] Multi-node cluster: ${server.nodes.length} other nodes, ${workerCount} workers per node`
+			);
+
+			// IMPORTANT: server.nodes only contains OTHER nodes, not the current node
+			// We must add the current node to the list
+
+			// Add current node first
+			for (let i = 0; i < workerCount; i++) {
+				nodes.push(`${server.hostname}-${i}`);
+			}
+
+			// Add other cluster nodes from server.nodes
+			for (const node of server.nodes) {
+				const hostname = node.name || node.hostname || node.host || node.id;
+
+				if (!hostname) {
+					logger.warn(`[SyncEngine.discoverCluster] Node missing name property: ${JSON.stringify(node)}`);
+					continue;
+				}
+
+				for (let i = 0; i < workerCount; i++) {
+					nodes.push(`${hostname}-${i}`);
+				}
+			}
+			logger.info(
+				`[SyncEngine.discoverCluster] Total cluster size: ${nodes.length} workers across ${server.nodes.length + 1} nodes`
+			);
 		} else {
-			logger.info('[SyncEngine.discoverCluster] No cluster nodes found, running in single-node mode');
-			nodes = [currentNodeId];
+			// Single node: generate workers for current node only
+			logger.info(`[SyncEngine.discoverCluster] Single node with ${workerCount} workers`);
+
+			for (let i = 0; i < workerCount; i++) {
+				nodes.push(`${server.hostname}-${i}`);
+			}
 		}
 
 		// Sort deterministically (lexicographic)
@@ -229,8 +268,8 @@ export class SyncEngine {
 			logger.debug(`[SyncEngine.runSyncCycle] Batch size: ${batchSize}`);
 
 			// Pull records for this node's partition
-			logger.debug(
-				`[SyncEngine.runSyncCycle] Pulling partition data from BigQuery - nodeId: ${this.nodeId}, clusterSize: ${this.clusterSize}, lastTimestamp: ${this.lastCheckpoint.lastTimestamp}`
+			logger.info(
+				`[SyncEngine.runSyncCycle] Pulling partition data from BigQuery - nodeId: ${this.nodeId}, clusterSize: ${this.clusterSize}, lastTimestamp: ${this.lastCheckpoint.lastTimestamp}, batchSize: ${batchSize}`
 			);
 			const records = await this.client.pullPartition({
 				nodeId: this.nodeId,
@@ -299,8 +338,27 @@ export class SyncEngine {
 
 		for (const record of records) {
 			try {
+				// Log first raw record from BigQuery to see structure
+				if (validRecords.length === 0) {
+					logger.info(`[SyncEngine.ingestRecords] First raw BigQuery record keys: ${Object.keys(record).join(', ')}`);
+					logger.info(
+						`[SyncEngine.ingestRecords] First raw BigQuery record sample: ${JSON.stringify(record).substring(0, 200)}`
+					);
+				}
+
 				// Convert BigQuery types to JavaScript primitives using type-converter utility
 				const convertedRecord = convertBigQueryTypes(record);
+
+				// Log first converted record
+				if (validRecords.length === 0) {
+					logger.info(
+						`[SyncEngine.ingestRecords] First converted record keys: ${Object.keys(convertedRecord).join(', ')}`
+					);
+					logger.info(
+						`[SyncEngine.ingestRecords] First converted record sample: ${JSON.stringify(convertedRecord).substring(0, 200)}`
+					);
+				}
+
 				logger.trace(`[SyncEngine.ingestRecords] Converted record: ${JSON.stringify(convertedRecord)}`);
 
 				// Validate timestamp exists
@@ -312,21 +370,31 @@ export class SyncEngine {
 					continue;
 				}
 
-				// Generate deterministic integer ID for fast indexing
+				// Generate deterministic ID for indexing
 				// Use hash of timestamp + deterministic fields for uniqueness
 				const timestamp = convertedRecord[timestampColumn];
 				const hashInput = `${timestamp}-${JSON.stringify(convertedRecord)}`;
 				const hash = createHash('sha256').update(hashInput).digest();
 				// Convert first 8 bytes of hash to positive integer within safe range
 				const bigIntId = hash.readBigInt64BE(0);
-				const id = Number(bigIntId < 0n ? -bigIntId : bigIntId) % Number.MAX_SAFE_INTEGER;
+				const numericId = Number(bigIntId < 0n ? -bigIntId : bigIntId) % Number.MAX_SAFE_INTEGER;
+				// Convert to string as required by Harper
+				const id = String(numericId);
 
-				// Store BigQuery record with integer ID for fast indexing
+				// Store BigQuery record with string ID
 				const mappedRecord = {
-					id, // Integer primary key for fast indexing
+					id, // String primary key (required by Harper)
 					...convertedRecord, // All BigQuery fields at top level
 					_syncedAt: new Date(), // Add sync timestamp
 				};
+
+				// Log first mapped record to see what's being written to Harper
+				if (validRecords.length === 0) {
+					logger.info(`[SyncEngine.ingestRecords] First mapped record keys: ${Object.keys(mappedRecord).join(', ')}`);
+					logger.info(
+						`[SyncEngine.ingestRecords] First mapped record sample: ${JSON.stringify(mappedRecord).substring(0, 200)}`
+					);
+				}
 
 				validRecords.push(mappedRecord);
 			} catch (error) {
@@ -354,10 +422,11 @@ export class SyncEngine {
 					}
 
 					for (const rec of validRecords) {
-						_lastResult = targetTableObj.create(rec);
+						// Use put (upsert) instead of create to handle duplicate IDs gracefully
+						_lastResult = targetTableObj.put(rec);
 					}
 				} catch (error) {
-					logger.error(`[SyncEngine.ingestRecords] Harper create failed: ${error.message}`, error);
+					logger.error(`[SyncEngine.ingestRecords] Harper put failed: ${error.message}`, error);
 					if (error.errors) {
 						error.errors.forEach((e) => logger.error(`  ${e.reason} at ${e.location}: ${e.message}`));
 					}

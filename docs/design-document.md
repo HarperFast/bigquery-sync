@@ -723,7 +723,7 @@ for (const record of harperSample) {
 
 ### Schema Design
 
-**Actual schema** (`schema/harper-bigquery-sync.graphql`):
+**Actual schema** (`schema/bigquery-ingestor.graphql`):
 
 ```graphql
 # Main data table

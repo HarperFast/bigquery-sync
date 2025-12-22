@@ -1,0 +1,908 @@
+{
+	"info": {
+		"name": "bigquery-ingestor",
+		"description": "Test suite for BigQuery Ingestor component. Tests cluster-wide start/stop/validate commands, status monitoring, and data ingestion verification.\\n\\n**Authentication:** This collection uses Basic Auth with default credentials (username: admin, password: HarperRocks!). You can change these in the collection-level auth settings.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:9926",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Single Node Tests",
+			"item": [
+				{
+					"name": "1.1 Get Initial Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has global and worker fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('global');",
+									"    pm.expect(jsonData).to.have.property('worker');",
+									"    pm.expect(jsonData).to.have.property('uptime');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"});",
+									"",
+									"pm.test(\"Global state has version number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.global).to.have.property('version');",
+									"    pm.environment.set('currentVersion', jsonData.global.version);",
+									"});",
+									"",
+									"pm.test(\"Worker has nodeId\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker).to.have.property('nodeId');",
+									"    pm.expect(jsonData.worker.nodeId).to.match(/.*-\\d+/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Get initial sync status. Should show stopped state with version 0."
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Start Sync (Cluster-Wide)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response confirms start command\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('start');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"});",
+									"",
+									"pm.test(\"Version number incremented\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var previousVersion = pm.environment.get('currentVersion') || 0;",
+									"    pm.expect(jsonData.version).to.be.above(previousVersion);",
+									"    pm.environment.set('currentVersion', jsonData.version);",
+									"});",
+									"",
+									"// Wait 2 seconds for engines to start",
+									"setTimeout(function(){}, 2000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"start\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Start all sync engines across all workers. Command is issued cluster-wide via SyncControlState table."
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Verify All Engines Running",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Global command is 'start'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.global.command).to.equal('start');",
+									"});",
+									"",
+									"pm.test(\"Worker is running\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.running).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"All tables have engines\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.tables).to.be.an('array');",
+									"    pm.expect(jsonData.worker.tables.length).to.be.above(0);",
+									"});",
+									"",
+									"pm.test(\"No failed engines\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.failedEngines).to.be.an('array');",
+									"    pm.expect(jsonData.worker.failedEngines.length).to.equal(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Verify all sync engines started successfully. Check global state matches worker state."
+					},
+					"response": []
+				},
+				{
+					"name": "1.4 Stop Sync (Cluster-Wide)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response confirms stop command\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('stop');",
+									"});",
+									"",
+									"pm.test(\"Version number incremented again\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var previousVersion = pm.environment.get('currentVersion') || 0;",
+									"    pm.expect(jsonData.version).to.be.above(previousVersion);",
+									"    pm.environment.set('currentVersion', jsonData.version);",
+									"});",
+									"",
+									"// Wait 2 seconds for engines to stop",
+									"setTimeout(function(){}, 2000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"stop\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Stop all sync engines across all workers. Command is issued cluster-wide."
+					},
+					"response": []
+				},
+				{
+					"name": "1.5 Verify All Engines Stopped",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Global command is 'stop'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.global.command).to.equal('stop');",
+									"});",
+									"",
+									"pm.test(\"Worker is not running\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.running).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Verify all sync engines stopped successfully."
+					},
+					"response": []
+				},
+				{
+					"name": "1.6 Trigger Validation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response confirms validate command\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('validate');",
+									"});",
+									"",
+									"pm.test(\"Version number incremented\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var previousVersion = pm.environment.get('currentVersion') || 0;",
+									"    pm.expect(jsonData.version).to.be.above(previousVersion);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"validate\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Trigger validation on all workers. Validation can run while engines are stopped."
+					},
+					"response": []
+				},
+				{
+					"name": "1.7 Test Invalid Action (Error Handling)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 500 (error)\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+									"});",
+									"",
+									"pm.test(\"Error message mentions unknown action\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(JSON.stringify(jsonData).toLowerCase()).to.include('unknown');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"invalid_action\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Test error handling with invalid action. Should reject with error."
+					},
+					"response": []
+				}
+			],
+			"description": "Basic single-node testing. Run these tests with `harper dev .` (single worker)."
+		},
+		{
+			"name": "2. Restart Recovery Tests",
+			"item": [
+				{
+					"name": "2.1 Start Sync Before Restart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Start command issued\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('start');",
+									"    pm.environment.set('versionBeforeRestart', jsonData.version);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"start\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Start sync, then manually restart Harper to test state recovery. After running this request, restart Harper and run the next request."
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Verify State After Restart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Engines automatically restarted\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.global.command).to.equal('start');",
+									"    pm.expect(jsonData.worker.running).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Version preserved from before restart\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var versionBeforeRestart = pm.environment.get('versionBeforeRestart');",
+									"    if (versionBeforeRestart) {",
+									"        pm.expect(jsonData.global.version).to.equal(parseInt(versionBeforeRestart));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "After restarting Harper, verify engines automatically resume based on persisted state in SyncControlState table."
+					},
+					"response": []
+				}
+			],
+			"description": "Test that workers automatically recover state after restart by loading from SyncControlState table.\n\n**Manual Steps:**\n1. Run request 2.1 (Start Sync)\n2. Stop Harper (Ctrl+C)\n3. Restart Harper (`harper dev .`)\n4. Run request 2.2 (Verify State)\n\nWorkers should automatically start engines based on last known state."
+		},
+		{
+			"name": "3. Multi-Worker Tests",
+			"item": [
+				{
+					"name": "3.1 Get Initial Multi-Worker Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Worker has nodeId with worker index\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.nodeId).to.match(/.*-\\d+/);",
+									"    console.log('Worker nodeId:', jsonData.worker.nodeId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Get status from one worker. With multiple workers, each request may hit a different worker (round-robin)."
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Start Sync (All Workers)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Start command issued\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('start');",
+									"    console.log('Commanded by:', jsonData.version);",
+									"});",
+									"",
+									"// Wait for all workers to process",
+									"setTimeout(function(){}, 3000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"start\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Issue start command. All workers across all threads should receive and process this command via subscription."
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Verify Worker 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Worker is running\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.running).to.be.true;",
+									"    console.log('Worker:', jsonData.worker.nodeId, 'running:', jsonData.worker.running);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Check worker status. Run this multiple times to hit different workers."
+					},
+					"response": []
+				},
+				{
+					"name": "3.4 Verify Worker 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Worker is running\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.running).to.be.true;",
+									"    console.log('Worker:', jsonData.worker.nodeId, 'running:', jsonData.worker.running);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Check worker status again (may hit different worker due to round-robin)."
+					},
+					"response": []
+				},
+				{
+					"name": "3.5 Verify Worker 3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Worker is running\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.worker.running).to.be.true;",
+									"    console.log('Worker:', jsonData.worker.nodeId, 'running:', jsonData.worker.running);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Check worker status again (may hit different worker due to round-robin)."
+					},
+					"response": []
+				},
+				{
+					"name": "3.6 Stop Sync (All Workers)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Stop command issued\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('stop');",
+									"});",
+									"",
+									"// Wait for all workers to process",
+									"setTimeout(function(){}, 3000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"stop\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/SyncControl",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
+						},
+						"description": "Issue stop command to all workers."
+					},
+					"response": []
+				}
+			],
+			"description": "Multi-worker testing. Start Harper with multiple workers: `harper dev . --threads 3`\n\nEach worker thread subscribes to SyncControlState independently. When you issue a command, all workers should receive and process it.\n\nNote: Harper's HTTP server uses round-robin across workers, so successive GET requests may hit different workers."
+		},
+		{
+			"name": "4. Data Query Tests",
+			"item": [
+				{
+					"name": "4.1 View Checkpoints",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array of checkpoints\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property('nodeId');",
+									"        pm.expect(jsonData[0]).to.have.property('lastTimestamp');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncCheckpoint/",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncCheckpoint/"]
+						},
+						"description": "Query checkpoint table to see sync progress per node."
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 View Validation Audits",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array of audit records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/SyncAudit/",
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncAudit/"]
+						},
+						"description": "Query audit table to see validation results."
+					},
+					"response": []
+				}
+			],
+			"description": "Query Harper tables directly to inspect sync state, checkpoints, and audit logs."
+		},
+		{
+			"name": "5. Data Ingestion Verification",
+			"item": [
+				{
+					"name": "5.1 Verify PortEvents Data Ingested",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array from PortEvents table\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"PortEvents table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'PortEvents table should contain ingested records');",
+									"    console.log('PortEvents record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"PortEvents records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('event_time');",
+									"        pm.expect(firstRecord).to.have.property('port_id');",
+									"        pm.expect(firstRecord).to.have.property('port_name');",
+									"        pm.expect(firstRecord).to.have.property('vessel_mmsi');",
+									"        pm.expect(firstRecord).to.have.property('event_type');",
+									"        pm.expect(firstRecord).to.have.property('latitude');",
+									"        pm.expect(firstRecord).to.have.property('longitude');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample PortEvents record:', JSON.stringify(firstRecord, null, 2));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/PortEvents/",
+							"host": ["{{baseUrl}}"],
+							"path": ["PortEvents/"]
+						},
+						"description": "Verify that port events data has been ingested from BigQuery. Should return records with port arrival/departure events."
+					},
+					"response": []
+				},
+				{
+					"name": "5.2 Verify VesselMetadata Data Ingested",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array from VesselMetadata table\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"VesselMetadata table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'VesselMetadata table should contain ingested records');",
+									"    console.log('VesselMetadata record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"VesselMetadata records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('last_updated');",
+									"        pm.expect(firstRecord).to.have.property('mmsi');",
+									"        pm.expect(firstRecord).to.have.property('vessel_name');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample VesselMetadata record:', JSON.stringify(firstRecord, null, 2));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/VesselMetadata/",
+							"host": ["{{baseUrl}}"],
+							"path": ["VesselMetadata/"]
+						},
+						"description": "Verify that vessel metadata has been ingested from BigQuery. Should return records with vessel information."
+					},
+					"response": []
+				},
+				{
+					"name": "5.3 Verify VesselPositions Data Ingested",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns array from VesselPositions table\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"VesselPositions table has records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.above(0, 'VesselPositions table should contain ingested records');",
+									"    console.log('VesselPositions record count:', jsonData.length);",
+									"});",
+									"",
+									"pm.test(\"VesselPositions records have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstRecord = jsonData[0];",
+									"        pm.expect(firstRecord).to.have.property('id');",
+									"        pm.expect(firstRecord).to.have.property('timestamp');",
+									"        pm.expect(firstRecord).to.have.property('mmsi');",
+									"        pm.expect(firstRecord).to.have.property('vessel_name');",
+									"        pm.expect(firstRecord).to.have.property('latitude');",
+									"        pm.expect(firstRecord).to.have.property('longitude');",
+									"        pm.expect(firstRecord).to.have.property('speed_knots');",
+									"        pm.expect(firstRecord).to.have.property('heading');",
+									"        pm.expect(firstRecord).to.have.property('course');",
+									"        pm.expect(firstRecord).to.have.property('_syncedAt');",
+									"        console.log('Sample VesselPositions record:', JSON.stringify(firstRecord, null, 2));",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/VesselPositions/",
+							"host": ["{{baseUrl}}"],
+							"path": ["VesselPositions/"]
+						},
+						"description": "Verify that vessel position data has been ingested from BigQuery. Should return records with vessel tracking positions."
+					},
+					"response": []
+				}
+			],
+			"description": "Verify that data has been successfully ingested from BigQuery into Harper tables. These tests query the actual data tables (PortEvents, VesselMetadata, VesselPositions) via REST endpoints to confirm records exist and have the expected fields."
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "username",
+				"value": "admin",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "HarperRocks!",
+				"type": "string"
+			}
+		]
+	}
+}

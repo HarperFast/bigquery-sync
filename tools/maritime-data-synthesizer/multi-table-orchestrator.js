@@ -283,25 +283,109 @@ export class MultiTableOrchestrator {
 	}
 
 	/**
-	 * Truncates all tables
+	 * Truncates all tables (free tier compatible)
+	 * For free tier, this deletes and recreates tables to clear data
 	 * @param {string} dataset - Dataset name
 	 * @private
 	 */
 	async truncateTables(dataset) {
-		console.log(`\nTruncating tables...`);
+		console.log(`\nTruncating tables (free tier compatible - using delete/recreate)...`);
 
 		const tables = ['vessel_positions', 'port_events', 'vessel_metadata'];
 
 		for (const tableName of tables) {
 			try {
-				await this.bigquery.query({
-					query: `DELETE FROM \`${this.projectId}.${dataset}.${tableName}\` WHERE true`,
-				});
+				const table = this.bigquery.dataset(dataset).table(tableName);
+				const [exists] = await table.exists();
+
+				if (!exists) {
+					console.log(`  ⊘ Table does not exist: ${tableName}`);
+					continue;
+				}
+
+				// Get current schema before deleting
+				const [metadata] = await table.getMetadata();
+				const schema = metadata.schema.fields;
+
+				// Delete and recreate
+				await table.delete();
+				await this.bigquery.dataset(dataset).createTable(tableName, { schema });
 				console.log(`  ✓ Truncated: ${tableName}`);
 			} catch (error) {
 				console.error(`  Error truncating ${tableName}:`, error.message);
 			}
 		}
+	}
+
+	/**
+	 * Clears all data from all tables (keeps schema)
+	 * For free tier compatibility, this deletes and recreates tables
+	 * @param {string} dataset - Dataset name
+	 * @returns {Promise<void>}
+	 */
+	async clearAllTables(dataset) {
+		console.log(`\nClearing all data from tables (schema will be preserved)...`);
+		console.log(`Note: BigQuery free tier requires table recreation to clear data`);
+
+		const tables = ['vessel_positions', 'port_events', 'vessel_metadata'];
+
+		for (const tableName of tables) {
+			try {
+				const table = this.bigquery.dataset(dataset).table(tableName);
+				const [exists] = await table.exists();
+
+				if (!exists) {
+					console.log(`  ⊘ Table does not exist: ${tableName}`);
+					continue;
+				}
+
+				// Get current schema before deleting
+				const [metadata] = await table.getMetadata();
+				const schema = metadata.schema.fields;
+
+				// Delete table
+				await table.delete();
+				console.log(`  ✓ Deleted: ${tableName}`);
+
+				// Recreate with same schema
+				await this.bigquery.dataset(dataset).createTable(tableName, { schema });
+				console.log(`  ✓ Recreated: ${tableName} (schema preserved)`);
+			} catch (error) {
+				console.error(`  ✗ Error clearing ${tableName}:`, error.message);
+			}
+		}
+
+		console.log(`\n✓ All tables cleared successfully`);
+	}
+
+	/**
+	 * Deletes all tables entirely (removes schema and data)
+	 * @param {string} dataset - Dataset name
+	 * @returns {Promise<void>}
+	 */
+	async deleteAllTables(dataset) {
+		console.log(`\nDeleting all tables (schema and data will be removed)...`);
+
+		const tables = ['vessel_positions', 'port_events', 'vessel_metadata'];
+
+		for (const tableName of tables) {
+			try {
+				const table = this.bigquery.dataset(dataset).table(tableName);
+				const [exists] = await table.exists();
+
+				if (!exists) {
+					console.log(`  ⊘ Table does not exist: ${tableName}`);
+					continue;
+				}
+
+				await table.delete();
+				console.log(`  ✓ Deleted: ${tableName}`);
+			} catch (error) {
+				console.error(`  ✗ Error deleting ${tableName}:`, error.message);
+			}
+		}
+
+		console.log(`\n✓ All tables deleted successfully`);
 	}
 
 	/**
@@ -821,6 +905,7 @@ export class MultiTableOrchestrator {
 
 	/**
 	 * Clean up old data beyond retention period
+	 * Note: Requires BigQuery billing enabled (DML queries not available in free tier)
 	 * @param {string} dataset - Dataset name
 	 * @private
 	 */
@@ -852,7 +937,13 @@ export class MultiTableOrchestrator {
 					console.log(`  ${table.name}: No records to delete`);
 				}
 			} catch (error) {
-				console.error(`  Error cleaning ${table.name}:`, error.message);
+				// Check if it's a free tier DML error
+				if (error.message && error.message.includes('DML queries are not allowed in the free tier')) {
+					console.log(`  ${table.name}: Cleanup skipped (requires BigQuery billing)`);
+					console.log(`  Note: Use 'clear' command to manually remove old data`);
+				} else {
+					console.error(`  Error cleaning ${table.name}:`, error.message);
+				}
 			}
 		}
 	}
