@@ -611,7 +611,6 @@ See [ROADMAP.md](ROADMAP.md) for future plans.
 
 ### Next (v3.0)
 
-- Multi-threaded ingestion per node
 - Dynamic rebalancing for autoscaling
 - Enhanced monitoring dashboards
 - Dynamic Harper table creation via Operations API

@@ -20,8 +20,9 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 ### Distributed Architecture
 
 - ✅ **Modulo-based partitioning** - Deterministic distributed workload assignment
+- ✅ **Multi-threaded ingestion** - Multiple workers per instance with thread-level checkpointing
 - ✅ **Adaptive batch sizing** - Phase-based adjustment (initial/catchup/steady)
-- ✅ **Checkpoint-based recovery** - Independent per-node failure recovery
+- ✅ **Checkpoint-based recovery** - Independent per-worker failure recovery
 - ✅ **Horizontal scalability** - Linear throughput increase with cluster size
 
 ### Maritime Data Synthesizer
@@ -41,14 +42,6 @@ We've shipped v2.0 with comprehensive multi-table support, column selection, and
 - ✅ **Reorganized codebase** - Clear separation (src/ vs tools/)
 
 ## What's Next (v3.0 Vision)
-
-### Multi-Threaded Ingestion
-
-- [ ] **Multi-threaded ingestion per node** ([#9](https://github.com/HarperFast/bigquery-ingestor/issues/9))
-  - Better CPU utilization on multi-core nodes
-  - Code already supports durable thread identity via `hostname-workerIndex`
-  - Thread-level checkpointing for fine-grained recovery
-  - Automatic thread scaling based on lag
 
 ### Dynamic Rebalancing
 
