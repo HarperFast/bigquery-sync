@@ -509,7 +509,7 @@ LIMIT 10;
 
 1. **Increase batch sizes** in config for faster catch-up
 2. **Add more nodes** to the cluster for horizontal scaling
-3. **Check IOPS capacity** - ensure storage can handle write throughput
+3. **Benchmark your workload** - use the benchmarking tool to determine optimal cluster sizing
 4. **Reduce columns** - fetch only needed columns to reduce network transfer
 
 ### Data Drift Detected
@@ -554,24 +554,20 @@ LIMIT 10;
 
 ## Performance Tuning
 
-### IOPS Calculation
+### Benchmarking Your Workload
 
-```
-Indexes: 1 primary + 1 timestamp = 2 indexes
-IOPS per record: ~4 IOPS
-Target throughput: 5000 records/sec per node
-Required IOPS: 20,000 per node
-```
+To determine the optimal cluster size and configuration for your specific use case, use the **BigQuery Ingestor Benchmarking Tool** (coming soon). The tool will:
+
+- Measure actual throughput with your data volume and record sizes
+- Test different batch size configurations
+- Recommend optimal cluster sizing based on your target latency
+- Identify storage and network bottlenecks specific to your workload
+
+Until the benchmarking tool is available, start with the batch size recommendations below and monitor your sync lag to determine if scaling is needed.
+
+**Note:** Harper doesn't autoscale. Add/remove nodes manually via Fabric UI or self-hosted configuration. Cluster size changes require workload rebalancing (see Limitations).
 
 Learn more about [Harper's storage architecture](https://docs.harperdb.io/docs/reference/storage-algorithm)
-
-### Scaling Guidelines
-
-- **3 nodes**: ~15K records/sec total
-- **6 nodes**: ~30K records/sec total
-- **12 nodes**: ~60K records/sec total
-
-**Note:** Harper doesn't autoscale. Add/remove nodes manually via Fabric UI or self-hosted configuration. Cluster size changes require consideration (see Limitations).
 
 ### Batch Size Recommendations
 
