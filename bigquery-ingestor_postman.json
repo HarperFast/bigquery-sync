@@ -55,12 +55,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Get initial sync status. Should show stopped state with version 0."
 					},
@@ -112,12 +108,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Start all sync engines across all workers. Command is issued cluster-wide via SyncControlState table."
 					},
@@ -165,12 +157,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Verify all sync engines started successfully. Check global state matches worker state."
 					},
@@ -220,12 +208,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Stop all sync engines across all workers. Command is issued cluster-wide."
 					},
@@ -261,12 +245,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Verify all sync engines stopped successfully."
 					},
@@ -312,12 +292,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Trigger validation on all workers. Validation can run while engines are stopped."
 					},
@@ -357,12 +333,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Test error handling with invalid action. Should reject with error."
 					},
@@ -409,12 +381,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Start sync, then manually restart Harper to test state recovery. After running this request, restart Harper and run the next request."
 					},
@@ -454,12 +422,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "After restarting Harper, verify engines automatically resume based on persisted state in SyncControlState table."
 					},
@@ -497,12 +461,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Get status from one worker. With multiple workers, each request may hit a different worker (round-robin)."
 					},
@@ -546,12 +506,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Issue start command. All workers across all threads should receive and process this command via subscription."
 					},
@@ -579,12 +535,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Check worker status. Run this multiple times to hit different workers."
 					},
@@ -612,12 +564,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Check worker status again (may hit different worker due to round-robin)."
 					},
@@ -645,12 +593,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Check worker status again (may hit different worker due to round-robin)."
 					},
@@ -693,12 +637,8 @@
 						},
 						"url": {
 							"raw": "{{baseUrl}}/SyncControl",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncControl"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncControl"]
 						},
 						"description": "Issue stop command to all workers."
 					},
@@ -739,12 +679,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncCheckpoint/",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncCheckpoint/"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncCheckpoint/"]
 						},
 						"description": "Query checkpoint table to see sync progress per node."
 					},
@@ -775,12 +711,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/SyncAudit/",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"SyncAudit/"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["SyncAudit/"]
 						},
 						"description": "Query audit table to see validation results."
 					},
@@ -840,12 +772,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/PortEvents/",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"PortEvents/"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["PortEvents/"]
 						},
 						"description": "Verify that port events data has been ingested from BigQuery. Should return records with port arrival/departure events."
 					},
@@ -895,12 +823,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/VesselMetadata/",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"VesselMetadata/"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["VesselMetadata/"]
 						},
 						"description": "Verify that vessel metadata has been ingested from BigQuery. Should return records with vessel information."
 					},
@@ -955,12 +879,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/VesselPositions/",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"VesselPositions/"
-							]
+							"host": ["{{baseUrl}}"],
+							"path": ["VesselPositions/"]
 						},
 						"description": "Verify that vessel position data has been ingested from BigQuery. Should return records with vessel tracking positions."
 					},

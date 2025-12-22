@@ -341,23 +341,23 @@ curl -X POST http://localhost:9926/SyncControl \
 
 ```json
 {
-  "global": {
-    "command": "start",
-    "commandedAt": "2025-12-16T20:30:00Z",
-    "commandedBy": "node1-0",
-    "version": 42
-  },
-  "worker": {
-    "nodeId": "node1-0",
-    "running": true,
-    "tables": [
-      { "tableId": "vessel_positions", "running": true, "phase": "steady" },
-      { "tableId": "port_events", "running": true, "phase": "catchup" }
-    ],
-    "failedEngines": []
-  },
-  "uptime": 3600,
-  "version": "2.0.0"
+	"global": {
+		"command": "start",
+		"commandedAt": "2025-12-16T20:30:00Z",
+		"commandedBy": "node1-0",
+		"version": 42
+	},
+	"worker": {
+		"nodeId": "node1-0",
+		"running": true,
+		"tables": [
+			{ "tableId": "vessel_positions", "running": true, "phase": "steady" },
+			{ "tableId": "port_events", "running": true, "phase": "catchup" }
+		],
+		"failedEngines": []
+	},
+	"uptime": 3600,
+	"version": "2.0.0"
 }
 ```
 
@@ -400,6 +400,7 @@ curl http://localhost:9926/SyncAudit/ \
 ```
 
 Each validation run creates audit records with:
+
 - `timestamp` - When validation ran
 - `nodeId` - Which worker performed the validation
 - `status` - Overall status: `healthy`, `issues_detected`, or `error`
@@ -458,6 +459,7 @@ bigquery-ingestor_postman.json
 ```
 
 **Collection includes:**
+
 - **Cluster Control** - Start, stop, validate commands
 - **Status Monitoring** - Check sync status and worker health
 - **Data Verification** - Query PortEvents, VesselMetadata, VesselPositions

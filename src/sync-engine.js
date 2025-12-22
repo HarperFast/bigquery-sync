@@ -340,9 +340,7 @@ export class SyncEngine {
 			try {
 				// Log first raw record from BigQuery to see structure
 				if (validRecords.length === 0) {
-					logger.info(
-						`[SyncEngine.ingestRecords] First raw BigQuery record keys: ${Object.keys(record).join(', ')}`
-					);
+					logger.info(`[SyncEngine.ingestRecords] First raw BigQuery record keys: ${Object.keys(record).join(', ')}`);
 					logger.info(
 						`[SyncEngine.ingestRecords] First raw BigQuery record sample: ${JSON.stringify(record).substring(0, 200)}`
 					);
