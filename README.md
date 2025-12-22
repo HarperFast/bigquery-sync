@@ -11,14 +11,14 @@
 
 ## Features (v2.0)
 
-✅ **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
-✅ **Column selection** - Reduce costs by fetching only needed columns from BigQuery
-✅ **Horizontal scalability** - Linear throughput increase with cluster size
-✅ **Adaptive batch sizing** - Automatically adjusts based on sync lag (initial/catchup/steady phases)
-✅ **Failure recovery** - Local checkpoints enable independent node recovery
-✅ **Exponential backoff** - Smart retry logic with jitter for transient BigQuery errors
-✅ **Production-ready** - Battle-tested with comprehensive logging for Grafana observability
-✅ **No coordination overhead** - Each node independently determines its workload via modulo partitioning
+- ✅ **Multi-table support** - Sync multiple BigQuery tables simultaneously with independent settings
+- ✅ **Column selection** - Reduce costs by fetching only needed columns from BigQuery
+- ✅ **Horizontal scalability** - Linear throughput increase with cluster size
+- ✅ **Adaptive batch sizing** - Automatically adjusts based on sync lag (initial/catchup/steady phases)
+- ✅ **Failure recovery** - Local checkpoints enable independent node recovery
+- ✅ **Exponential backoff** - Smart retry logic with jitter for transient BigQuery errors
+- ✅ **Production-ready** - Battle-tested with comprehensive logging for Grafana observability
+- ✅ **No coordination overhead** - Each node independently determines its workload via modulo partitioning
 
 ## Quick Start
 
@@ -298,10 +298,10 @@ harper dev .
 
 The maritime synthesizer provides a **realistic, production-grade test environment**. Vessel tracking data mirrors common BigQuery workloads:
 
-✅ **High volume continuous flow** - 144K+ records/day sustained
-✅ **Temporal ordering constraints** - Chronological data with late arrivals
-✅ **Complex schema** - Geospatial coords, metadata, multi-table relationships
-✅ **Production use case** - Matches IoT streams, event tracking, time-series data
+- ✅ **High volume continuous flow** - 144K+ records/day sustained
+- ✅ **Temporal ordering constraints** - Chronological data with late arrivals
+- ✅ **Complex schema** - Geospatial coords, metadata, multi-table relationships
+- ✅ **Production use case** - Matches IoT streams, event tracking, time-series data
 
 Perfect for testing sync performance, multi-table coordination, and distributed workload partitioning before production deployment.
 
