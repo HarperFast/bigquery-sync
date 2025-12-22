@@ -88,8 +88,8 @@ harper dev .
 
 The plugin will:
 
-1. Discover cluster topology
-2. Calculate this node's partition assignments
+1. Calculate worker IDs from cluster instances and thread counts
+2. Determine this worker's partition assignments
 3. Begin syncing data from BigQuery
 4. Create checkpoints for recovery
 5. Continuously poll for new data
@@ -104,11 +104,11 @@ curl http://localhost:9926/SyncControl
 
 ### How It Works
 
-Each Harper node in the cluster:
+Each Harper worker in the cluster:
 
-1. **Discovers peers** via Harper's clustering API
-2. **Calculates node ID** from ordered peer list (stable across restarts)
-3. **Partitions workload** using modulo: pulls only records where `hash(timestamp) % clusterSize == nodeId`
+1. **Calculates worker ID** from cluster instances and thread counts per instance (deterministic ordering by hostname-workerIndex)
+2. **Determines cluster size** from total workers across all instances
+3. **Partitions workload** using modulo: pulls only records where `hash(timestamp) % clusterSize == workerID`
 4. **Syncs independently** with local checkpoints
 5. **Relies on Harper replication** for data distribution across the cluster
 
